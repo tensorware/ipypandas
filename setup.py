@@ -78,7 +78,7 @@ setup_args = dict(
     python_requires=">=3.6",
     install_requires=[
         'ipywidgets>=7.0.0',
-        'pandas>=1.3.0'
+        'pandas>=1.4.0'
     ],
     extras_require={
         'test': [
@@ -88,7 +88,7 @@ setup_args = dict(
         ],
         'examples': [
             'ipywidgets>=7.0.0',
-            'pandas>=1.3.0'
+            'pandas>=1.4.0'
         ],
         'docs': [
             'sphinx>=1.5',
