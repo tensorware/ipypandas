@@ -1,6 +1,7 @@
-// Entry point for the notebook bundle containing custom model definitions.
-//
-define(function() {
+// Copyright (c) Tensorware.
+// Distributed under the terms of the Modified BSD License.
+
+define(() => {
     "use strict";
 
     window['requirejs'].config({
@@ -10,8 +11,6 @@ define(function() {
             },
         }
     });
-    // Export the required load_ipython_extension function
-    return {
-        load_ipython_extension : function() {}
-    };
+
+    return { load_ipython_extension: () => { } };
 });
