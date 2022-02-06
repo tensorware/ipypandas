@@ -1,0 +1,14 @@
+.ipypandas {
+}
+
+.ipypandas th.pd-sort-desc {
+    background-color: red;
+}
+
+.ipypandas th.pd-sort-asc {
+    background-color: green;
+}
+
+.ipypandas th.pd-state-selected {
+    background-color: blue;
+}

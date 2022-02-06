@@ -1,0 +1,15 @@
+.wy-side-nav-search, .wy-nav-top {
+    background: #004472;
+}
+
+.wy-menu-vertical header, .wy-menu-vertical p.caption {
+    color: #1d7f5c;
+}
+
+.wy-nav-content .wy-breadcrumbs a {
+    color: #004472;
+}
+
+.wy-nav-content a {
+    color: #1d7f5c;
+}

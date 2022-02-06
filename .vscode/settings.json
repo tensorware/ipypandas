@@ -1,0 +1,13 @@
+{
+    "files.exclude": {
+        "**/lib": true,
+        "**/dist": true,
+        "**/node_modules": true,
+        "**/nbextension": true,
+        "**/labextension": true,
+        "**/ipypandas.egg-info": true,
+        "**/.pytest_cache": true,
+        "**/__pycache__": true
+    },
+    "python.testing.pytestEnabled": true
+}

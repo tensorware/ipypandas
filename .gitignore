@@ -1,0 +1,83 @@
+# Python
+.ipynb_checkpoints
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.python-version
+.env
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+target/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Tests
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache
+nosetests.xml
+coverage.xml
+**/coverage/
+*,cover
+.hypothesis/
+
+# Documentation
+docs/_build/
+docs/source/_static/embed-bundle.js
+docs/source/_static/embed-bundle.js.map
+
+# OSX
+._*
+.DS_Store
+.AppleDouble
+.LSOverride
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# NPM
+**/node_modules/
+ipypandas/nbextension/index.*
+ipypandas/labextension/*.tgz
+ipypandas/labextension
