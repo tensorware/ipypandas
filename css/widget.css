@@ -1,14 +1,37 @@
-.ipypandas {
+.pd-ipypandas {
+    padding: 0;
+    overflow: hidden;
 }
 
-.ipypandas th.pd-sort-desc {
+.pd-ipypandas .pd-view {
+    resize: vertical;
+    overflow-y: auto;
+}
+
+.pd-ipypandas .pd-view .pd-table thead {
+    top: 0;
+    z-index: 2;
+    position: sticky;
+    background-color: var(--jp-layout-color0);
+    box-shadow: 0px 1px var(--jp-border-color1);
+}
+
+.pd-ipypandas .pd-view .pd-table tbody th {
+    left: 0;
+    z-index: 1;
+    position: sticky;
+    background-color: var(--jp-layout-color0);
+    box-shadow: 1px 0px var(--jp-border-color1);
+}
+
+.pd-ipypandas .pd-view .pd-table thead th.pd-sort-desc {
     background-color: red;
 }
 
-.ipypandas th.pd-sort-asc {
+.pd-ipypandas .pd-view .pd-table thead th.pd-sort-asc {
     background-color: green;
 }
 
-.ipypandas th.pd-state-selected {
+.pd-ipypandas .pd-view .pd-table tbody th.pd-state-selected {
     background-color: blue;
 }

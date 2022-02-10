@@ -27,6 +27,13 @@ export class PandasModel extends DOMWidgetModel {
             _view_name: PandasModel.view_name,
             _view_module: PandasModel.view_module,
             _view_module_version: PandasModel.view_module_version,
+            data: '{}',
+            view: '<br/>',
+            top: 0,
+            height: 0,
+            size: 0,
+            row: '{}',
+            col: '{}',
         };
     }
 }
@@ -37,19 +44,19 @@ export class PandasView extends DOMWidgetView {
     }
 
     get_view(): any {
-        return this.model.get('view');
+        const view = $('<div/>').addClass('pd-view');
+        view.html(this.model.get('view'));
+        return view;
     }
 
     get_model(): any {
         return {
+            top: JSON.parse(this.model.get('top')),
+            height: JSON.parse(this.model.get('height')),
+            size: JSON.parse(this.model.get('size')),
             row: JSON.parse(this.model.get('row')),
             col: JSON.parse(this.model.get('col')),
         };
-    }
-
-    get_text(): string {
-        const model = this.get_model();
-        return $('<span/>').text(JSON.stringify(model)).html();
     }
 
     get_class(target: JQuery<HTMLElement>, match: string): string {
@@ -70,7 +77,7 @@ export class PandasView extends DOMWidgetView {
     }
 
     render(): void {
-        const classes_root = ['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-mod-trusted', 'jp-OutputArea-output'];
+        const classes_root = ['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas'];
         const classes_sort = ['pd-sort-desc', 'pd-sort-asc', ''];
         const classes_state = ['pd-state-selected', ''];
         this.el.classList.add(...classes_root);
@@ -81,6 +88,11 @@ export class PandasView extends DOMWidgetView {
         // register change events
         this.model.on('change:data', this.value_changed, this);
         this.model.on('change:view', this.value_changed, this);
+
+        this.model.on('change:top', this.value_changed, this);
+        this.model.on('change:height', this.value_changed, this);
+        this.model.on('change:size', this.value_changed, this);
+
         this.model.on('change:col', this.value_changed, this);
         this.model.on('change:row', this.value_changed, this);
 
@@ -160,10 +172,12 @@ export class PandasView extends DOMWidgetView {
     }
 
     value_changed(): void {
+        const model = this.get_model();
+
         // update view
         $(this.el).html(this.get_view());
 
-        const model = this.get_model();
+        // update classes
         Object.entries(model.col).forEach(([key, value]: [string, any]) => {
             const target = $(`#${key}`);
             if (value.sort) {
