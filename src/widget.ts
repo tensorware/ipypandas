@@ -27,13 +27,6 @@ export class PandasModel extends DOMWidgetModel {
             _view_name: PandasModel.view_name,
             _view_module: PandasModel.view_module,
             _view_module_version: PandasModel.view_module_version,
-            data: '{}',
-            view: '<br/>',
-            top: 0,
-            height: 0,
-            size: 0,
-            row: '{}',
-            col: '{}',
         };
     }
 }
@@ -51,9 +44,12 @@ export class PandasView extends DOMWidgetView {
 
     get_model(): any {
         return {
-            top: JSON.parse(this.model.get('top')),
-            height: JSON.parse(this.model.get('height')),
             size: JSON.parse(this.model.get('size')),
+            scroll: JSON.parse(this.model.get('scroll')),
+            min_rows: JSON.parse(this.model.get('min_rows')),
+            max_rows: JSON.parse(this.model.get('max_rows')),
+            max_columns: JSON.parse(this.model.get('max_columns')),
+            max_colwidth: JSON.parse(this.model.get('max_colwidth')),
             row: JSON.parse(this.model.get('row')),
             col: JSON.parse(this.model.get('col')),
         };
@@ -89,9 +85,13 @@ export class PandasView extends DOMWidgetView {
         this.model.on('change:data', this.value_changed, this);
         this.model.on('change:view', this.value_changed, this);
 
-        this.model.on('change:top', this.value_changed, this);
-        this.model.on('change:height', this.value_changed, this);
         this.model.on('change:size', this.value_changed, this);
+        this.model.on('change:scroll', this.value_changed, this);
+
+        this.model.on('change:min_rows', this.value_changed, this);
+        this.model.on('change:max_rows', this.value_changed, this);
+        this.model.on('change:max_columns', this.value_changed, this);
+        this.model.on('change:max_colwidth', this.value_changed, this);
 
         this.model.on('change:col', this.value_changed, this);
         this.model.on('change:row', this.value_changed, this);
@@ -176,6 +176,11 @@ export class PandasView extends DOMWidgetView {
 
         // update view
         $(this.el).html(this.get_view());
+
+        // TODO get dimensions
+        //const headHeight = $(this.el).find('thead').height() || 0;
+        //const rowHeight = $(this.el).find('tbody > tr:first').height() || 0;
+        //$(this.el).children('.pd-view').height(model.max_rows);
 
         // update classes
         Object.entries(model.col).forEach(([key, value]: [string, any]) => {

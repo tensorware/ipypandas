@@ -38,9 +38,14 @@ class PandasWidget(DOMWidget):
     view = Unicode('<br/>').tag(sync=True)
 
     # viewport
-    top = Integer(0).tag(sync=True)
-    height = Integer(0).tag(sync=True)
     size = Integer(0).tag(sync=True)
+    scroll = Integer(0).tag(sync=True)
+
+    # ranges
+    min_rows = Integer(0).tag(sync=True)
+    max_rows = Integer(0).tag(sync=True)
+    max_columns = Integer(0).tag(sync=True)
+    max_colwidth = Integer(0).tag(sync=True)
 
     # row and column actions
     row = Unicode('{}').tag(sync=True)
@@ -69,16 +74,28 @@ class PandasWidget(DOMWidget):
         else:
             self._df = pd.DataFrame()
 
-        # init top
-        if 'top' not in kwargs:
-            self.top = 0
-
-        # init height
-        if 'height' not in kwargs:
-            self.height = 50
-
         # init size
         self.size = self._df.shape[0]
+
+        # init scroll
+        if 'scroll' not in kwargs:
+            self.scroll = 0
+
+        # init min rows
+        if 'min_rows' not in kwargs:
+            self.min_rows = pd.get_option('display.min_rows')
+
+        # init max rows
+        if 'max_rows' not in kwargs:
+            self.max_rows = pd.get_option('display.max_rows')
+
+        # init max columns
+        if 'max_columns' not in kwargs:
+            self.max_columns = pd.get_option('display.max_columns')
+
+        # init max colwidth
+        if 'max_colwidth' not in kwargs:
+            self.max_colwidth = pd.get_option('display.max_colwidth')
 
     def message(self, widget, content, buffers=None):
         model = content['model']
@@ -127,13 +144,13 @@ class PandasWidget(DOMWidget):
             self._df.sort_values(**sort_args)
 
     def slice(self, model):
-        start, end = self.top, self.height
+        start, end = self.scroll, self.scroll + self.max_rows
 
         for col in model['col'].values():
             pass  # TODO slice viewport data
 
         # slice dataframe
-        self._df = self._df.iloc[self.top: self.height]
+        self._df = self._df.iloc[start: end]
 
     def update(self):
 
