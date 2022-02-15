@@ -34,12 +34,11 @@ class PandasWidget(DOMWidget):
     # dataframe, data json and view html
     df = Instance(pd.DataFrame)
     #_df = Instance(pd.DataFrame)
-    data = Unicode('{}').tag(sync=True)
     view = Unicode('<br/>').tag(sync=True)
+    size = Integer(0).tag(sync=True)
 
     # viewport
-    size = Integer(0).tag(sync=True)
-    scroll = Integer(0).tag(sync=True)
+    pos = Integer(0).tag(sync=True)
 
     # ranges
     min_rows = Integer(0).tag(sync=True)
@@ -77,9 +76,9 @@ class PandasWidget(DOMWidget):
         # init size
         self.size = self._df.shape[0]
 
-        # init scroll
-        if 'scroll' not in kwargs:
-            self.scroll = 0
+        # init pos
+        if 'pos' not in kwargs:
+            self.pos = 0
 
         # init min rows
         if 'min_rows' not in kwargs:
@@ -98,6 +97,8 @@ class PandasWidget(DOMWidget):
             self.max_colwidth = pd.get_option('display.max_colwidth')
 
     def message(self, widget, content, buffers=None):
+        print('---------- message ----------')
+
         model = content['model']
 
         # copy original dataframe (do all operations inplace)
@@ -144,20 +145,17 @@ class PandasWidget(DOMWidget):
             self._df.sort_values(**sort_args)
 
     def slice(self, model):
-        start, end = self.scroll, self.scroll + self.max_rows
+        start, end = model['pos'], model['pos'] + model['max_rows']
 
         for col in model['col'].values():
             pass  # TODO slice viewport data
 
+        print(f'start={start}, end={end}')
+
         # slice dataframe
-        self._df = self._df.iloc[start: end]
+        # self._df = self._df.iloc[start: end]
 
     def update(self):
-
-        # TODO filter viewport data
-
-        # update data json
-        self.data = self._df.to_json()
 
         # update view html
         view = Styler(self._df, uuid=self.uuid, cell_ids=True, table_attributes='class="pd-table"')

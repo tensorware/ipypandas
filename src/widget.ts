@@ -27,31 +27,29 @@ export class PandasModel extends DOMWidgetModel {
             _view_name: PandasModel.view_name,
             _view_module: PandasModel.view_module,
             _view_module_version: PandasModel.view_module_version,
+            _scroll_top: 0,
+            _scroll_left: 0,
         };
     }
 }
 
 export class PandasView extends DOMWidgetView {
-    get_data(): any {
-        return JSON.parse(this.model.get('data'));
-    }
-
-    get_view(): any {
+    get_model(): any {
         const view = $('<div/>').addClass('pd-view');
         view.html(this.model.get('view'));
-        return view;
-    }
 
-    get_model(): any {
         return {
+            view: view,
             size: JSON.parse(this.model.get('size')),
-            scroll: JSON.parse(this.model.get('scroll')),
+            pos: JSON.parse(this.model.get('pos')),
             min_rows: JSON.parse(this.model.get('min_rows')),
             max_rows: JSON.parse(this.model.get('max_rows')),
             max_columns: JSON.parse(this.model.get('max_columns')),
             max_colwidth: JSON.parse(this.model.get('max_colwidth')),
             row: JSON.parse(this.model.get('row')),
             col: JSON.parse(this.model.get('col')),
+            _scroll_top: JSON.parse(this.model.get('_scroll_top')),
+            _scroll_left: JSON.parse(this.model.get('_scroll_left')),
         };
     }
 
@@ -72,6 +70,31 @@ export class PandasView extends DOMWidgetView {
         return c || '';
     }
 
+    rotate_class(target: JQuery<HTMLElement>, classes: string[]): string {
+        for (let i = 0; i < classes.length; i++) {
+            if (target.hasClass(classes[i])) {
+                // remove old class
+                target.removeClass(classes[i]);
+
+                // add new class
+                i = i >= classes.length ? 0 : i + 1;
+                if (classes[i]) {
+                    target.addClass(classes[i]);
+                }
+
+                return classes[i];
+            }
+        }
+
+        // default class
+        target.addClass(classes[0]);
+        return classes[0];
+    }
+
+    round_to(number: number, multiple: number): number {
+        return multiple * Math.round(number / multiple);
+    }
+
     render(): void {
         const classes_root = ['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas'];
         const classes_sort = ['pd-sort-desc', 'pd-sort-asc', ''];
@@ -82,11 +105,10 @@ export class PandasView extends DOMWidgetView {
         this.value_changed();
 
         // register change events
-        this.model.on('change:data', this.value_changed, this);
         this.model.on('change:view', this.value_changed, this);
-
         this.model.on('change:size', this.value_changed, this);
-        this.model.on('change:scroll', this.value_changed, this);
+
+        this.model.on('change:pos', this.value_changed, this);
 
         this.model.on('change:min_rows', this.value_changed, this);
         this.model.on('change:max_rows', this.value_changed, this);
@@ -145,42 +167,51 @@ export class PandasView extends DOMWidgetView {
 
                 this.model.set('row', JSON.stringify(model.row));
             }
-
-            this.touch();
         });
     }
 
-    rotate_class(target: JQuery<HTMLElement>, classes: string[]): string {
-        for (let i = 0; i < classes.length; i++) {
-            if (target.hasClass(classes[i])) {
-                // remove old class
-                target.removeClass(classes[i]);
-
-                // add new class
-                i = i >= classes.length ? 0 : i + 1;
-                if (classes[i]) {
-                    target.addClass(classes[i]);
-                }
-
-                return classes[i];
-            }
-        }
-
-        // default class
-        target.addClass(classes[0]);
-        return classes[0];
-    }
-
     value_changed(): void {
+        // get model
         const model = this.get_model();
 
-        // update view
-        $(this.el).html(this.get_view());
+        // update view (rendered view html from pandas)
+        $(this.el).html(model.view);
 
-        // TODO get dimensions
-        //const headHeight = $(this.el).find('thead').height() || 0;
-        //const rowHeight = $(this.el).find('tbody > tr:first').height() || 0;
-        //$(this.el).children('.pd-view').height(model.max_rows);
+        // get view
+        const view = $(this.el).children('.pd-view');
+
+        // set saved scroll position
+        view.scrollTop(model._scroll_top);
+        view.scrollLeft(model._scroll_left);
+
+        // handle scroll events (scroll is not delegated and therefore can't be registered on the parent element)
+        view.on('scroll', (e) => {
+            const target = $(e.target);
+
+            // get dimensions
+            const rowHeight = $(this.el).find('tbody > tr:first').outerHeight() || 0;
+
+            // get positions
+            const currentScrollTop = target.scrollTop();
+            const targetScrollTop = this.round_to(currentScrollTop || 0, rowHeight);
+            const currentScrollLeft = target.scrollLeft();
+            const targetScrollLeft = currentScrollLeft || 0;
+
+            // set scroll
+            this.model.set('_scroll_top', targetScrollTop);
+            this.model.set('_scroll_left', targetScrollLeft);
+            target.scrollTop(targetScrollTop);
+            target.scrollLeft(targetScrollLeft);
+
+            // set position
+            const currentPos = targetScrollTop / rowHeight;
+            if (Math.abs(currentPos - model.pos) > 10) {
+                this.model.set('pos', currentPos);
+            }
+
+            e.preventDefault();
+            return false;
+        });
 
         // update classes
         Object.entries(model.col).forEach(([key, value]: [string, any]) => {
@@ -195,6 +226,8 @@ export class PandasView extends DOMWidgetView {
                 target.addClass(`pd-state-${value.state}`);
             }
         });
+
+        console.log('---------- send ----------', model);
 
         // send to backend
         this.send({ model: model });

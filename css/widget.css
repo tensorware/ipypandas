@@ -5,7 +5,8 @@
 
 .pd-ipypandas .pd-view {
     resize: vertical;
-    overflow-y: auto;
+    overflow: auto;
+    height: 300px;
 }
 
 .pd-ipypandas .pd-view .pd-table thead {
