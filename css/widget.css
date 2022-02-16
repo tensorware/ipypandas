@@ -2,7 +2,8 @@
     --pd-header-color: var(--jp-layout-color0);
     --pd-border-color: var(--jp-border-color1);
     --pd-border-width: 1px;
-    --pd-td-max-width: 50ch;
+    --pd-td-max-width: 1ch;
+    --pd-footer-padding: 12px;
 }
 
 .pd-ipypandas {
@@ -66,4 +67,8 @@
 
 .pd-ipypandas .pd-view .pd-table tbody th.pd-row-head.pd-state-selected {
     background-color: blue;
+}
+
+.pd-ipypandas .pd-footer {
+    padding-top: var(--pd-footer-padding);
 }

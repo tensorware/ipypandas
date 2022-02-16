@@ -31,14 +31,18 @@ class PandasWidget(DOMWidget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
-    # dataframe, data json and view html
+    # dataframe and view html
     df = Instance(pd.DataFrame)
     #_df = Instance(pd.DataFrame)
     view = Unicode('<br/>').tag(sync=True)
-    size = Integer(0).tag(sync=True)
+
+    # dimensions
+    n_rows = Integer(0).tag(sync=True)
+    n_cols = Integer(0).tag(sync=True)
 
     # viewport
-    pos = Integer(0).tag(sync=True)
+    pos_rows = Integer(0).tag(sync=True)
+    pos_cols = Integer(0).tag(sync=True)
 
     # ranges
     min_rows = Integer(0).tag(sync=True)
@@ -73,12 +77,17 @@ class PandasWidget(DOMWidget):
         else:
             self._df = pd.DataFrame()
 
-        # init size
-        self.size = self._df.shape[0]
+        # init dimensions
+        self.n_rows = self._df.shape[0]
+        self.n_cols = self._df.shape[1]
 
-        # init pos
-        if 'pos' not in kwargs:
-            self.pos = 0
+        # init pos rows
+        if 'pos_rows' not in kwargs:
+            self.pos_rows = 0
+
+        # init pos cols
+        if 'pos_cols' not in kwargs:
+            self.pos_cols = 0
 
         # init min rows
         if 'min_rows' not in kwargs:
@@ -145,7 +154,7 @@ class PandasWidget(DOMWidget):
             self._df.sort_values(**sort_args)
 
     def slice(self, model):
-        start, end = model['pos'], model['pos'] + model['max_rows']
+        start, end = model['pos_rows'], model['pos_rows'] + model['max_rows']
 
         for col in model['col'].values():
             pass  # TODO slice viewport data

@@ -35,12 +35,12 @@ export class PandasModel extends DOMWidgetModel {
 }
 
 export class PandasView extends DOMWidgetView {
-    get_model(): any {
+    get_view(): JQuery<HTMLElement> {
         const view = $('<div/>').addClass('pd-view');
+
+        // table
         view.html(this.model.get('view'));
         const table = view.children('.pd-table');
-
-        // TODO footer shape text
 
         // truncated content
         if (this.model.get('max_colwidth')) {
@@ -52,10 +52,28 @@ export class PandasView extends DOMWidgetView {
             table.addClass('pd-empty');
         }
 
+        return view;
+    }
+
+    get_footer(): JQuery<HTMLElement> {
+        const footer = $('<div/>').addClass('pd-footer');
+
+        // shape
+        const n_rows = this.model.get('n_rows');
+        const n_cols = this.model.get('n_cols');
+        const shape = $('<p/>').addClass('pd-shape');
+        shape.text(`${n_rows} rows × ${n_cols} columns`);
+        footer.append(shape);
+
+        return footer;
+    }
+
+    get_model(): any {
         return {
-            view: view,
-            size: this.model.get('size'),
-            pos: this.model.get('pos'),
+            n_rows: this.model.get('n_rows'),
+            n_cols: this.model.get('n_cols'),
+            pos_rows: this.model.get('pos_rows'),
+            pos_cols: this.model.get('pos_cols'),
             min_rows: this.model.get('min_rows'),
             max_rows: this.model.get('max_rows'),
             max_columns: this.model.get('max_columns'),
@@ -118,9 +136,12 @@ export class PandasView extends DOMWidgetView {
 
         // register change events
         this.model.on('change:view', this.value_changed, this);
-        this.model.on('change:size', this.value_changed, this);
 
-        this.model.on('change:pos', this.value_changed, this);
+        this.model.on('change:n_rows', this.value_changed, this);
+        this.model.on('change:n_cols', this.value_changed, this);
+
+        this.model.on('change:pos_rows', this.value_changed, this);
+        this.model.on('change:pos_cols', this.value_changed, this);
 
         this.model.on('change:min_rows', this.value_changed, this);
         this.model.on('change:max_rows', this.value_changed, this);
@@ -194,16 +215,22 @@ export class PandasView extends DOMWidgetView {
     value_changed(): void {
         // get model
         const model = this.get_model();
+        const root = $(this.el).empty();
 
         // update view (rendered view html from pandas)
-        $(this.el).html(model.view);
+        const view = this.get_view();
+        root.append(view);
+
+        // update footer
+        const footer = this.get_footer();
+        root.append(footer);
 
         // set scroll position
-        model.view.scrollTop(model._scroll_top);
-        model.view.scrollLeft(model._scroll_left);
+        view.scrollTop(model._scroll_top);
+        view.scrollLeft(model._scroll_left);
 
         // set height
-        model.view.height(model._height);
+        view.height(model._height);
 
         // set action classes
         Object.entries(model.col).forEach(([key, value]: [string, any]) => {
@@ -219,10 +246,11 @@ export class PandasView extends DOMWidgetView {
             }
         });
 
-        $.when(model.view).then((view: JQuery<HTMLElement>) => {
+        $.when(view).then((view: JQuery<HTMLElement>) => {
             // get dimensions
-            const headerHeight = view.find('thead').outerHeight(true) || 0;
-            const rowHeight = view.find('tbody > tr:first').outerHeight(true) || 0;
+            const table = view.children('.pd-table');
+            const headerHeight = table.find('thead').outerHeight() || 0;
+            const rowHeight = table.find('tbody > tr:first').outerHeight() || 0;
 
             // handle scroll events (scroll is not delegated and therefore can't be registered on the parent element)
             view.on('scroll', (e: JQuery.ScrollEvent) => {
@@ -238,13 +266,16 @@ export class PandasView extends DOMWidgetView {
 
                 // set position
                 const currentPos = targetScrollTop / rowHeight;
-                if (Math.abs(currentPos - this.model.get('pos')) > 1000) {
-                    this.model.set('pos', currentPos);
+                if (Math.abs(currentPos - this.model.get('pos_rows')) > 1000) {
+                    this.model.set('pos_rows', currentPos);
                 }
             });
 
+            // set max characters per column
+            $('body')[0].style.setProperty('--pd-td-max-width', model.max_colwidth + 'ch');
+
             // set initial height
-            let maxHeight = headerHeight + model.size * rowHeight;
+            let maxHeight = table.outerHeight() || 0;
             let minHeight = Math.min(maxHeight, headerHeight + model.min_rows * rowHeight);
             view.css({
                 'min-height': minHeight + 'px',
@@ -260,11 +291,9 @@ export class PandasView extends DOMWidgetView {
                 'max-height': maxHeight + 'px',
             });
 
-            // set max characters per column
-            $('body')[0].style.setProperty('--pd-td-max-width', model.max_colwidth + 'ch');
-
+            // set height
             if (!this.model.get('_height')) {
-                if (!model.max_rows || model.max_rows >= model.size) {
+                if (!model.max_rows || model.n_rows <= model.max_rows) {
                     this.model.set('_height', maxHeight);
                 } else {
                     this.model.set('_height', minHeight);
@@ -273,7 +302,7 @@ export class PandasView extends DOMWidgetView {
 
             console.log('---------- send ----------', model);
 
-            // send to backend # TODO dont send view
+            // send to backend
             this.send({ model: model });
         });
     }
