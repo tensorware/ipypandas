@@ -82,19 +82,19 @@ class PandasWidget(DOMWidget):
 
         # init min rows
         if 'min_rows' not in kwargs:
-            self.min_rows = pd.get_option('display.min_rows')
+            self.min_rows = pd.get_option('display.min_rows') or 10
 
         # init max rows
         if 'max_rows' not in kwargs:
-            self.max_rows = pd.get_option('display.max_rows')
+            self.max_rows = pd.get_option('display.max_rows') or 60
 
         # init max columns
         if 'max_columns' not in kwargs:
-            self.max_columns = pd.get_option('display.max_columns')
+            self.max_columns = pd.get_option('display.max_columns') or 0
 
         # init max colwidth
         if 'max_colwidth' not in kwargs:
-            self.max_colwidth = pd.get_option('display.max_colwidth')
+            self.max_colwidth = pd.get_option('display.max_colwidth') or 50
 
     def message(self, widget, content, buffers=None):
         print('---------- message ----------')
