@@ -91,10 +91,6 @@ export class PandasView extends DOMWidgetView {
         return classes[0];
     }
 
-    round_to(number: number, multiple: number): number {
-        return multiple * Math.round(number / multiple);
-    }
-
     render(): void {
         const classes_root = ['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas'];
         const classes_sort = ['pd-sort-desc', 'pd-sort-asc', ''];
@@ -103,6 +99,7 @@ export class PandasView extends DOMWidgetView {
 
         // initial view
         this.value_changed();
+        this.scroll_changed();
 
         // register change events
         this.model.on('change:view', this.value_changed, this);
@@ -118,8 +115,11 @@ export class PandasView extends DOMWidgetView {
         this.model.on('change:col', this.value_changed, this);
         this.model.on('change:row', this.value_changed, this);
 
+        this.model.on('change:_scroll_top', this.scroll_changed, this);
+        this.model.on('change:_scroll_left', this.scroll_changed, this);
+
         // register click events
-        $(this.el).on('click', (e) => {
+        $(this.el).on('click', (e: JQuery.ClickEvent) => {
             const target = $(e.target);
             const id = target.attr('id') || '';
 
@@ -177,40 +177,30 @@ export class PandasView extends DOMWidgetView {
         // update view (rendered view html from pandas)
         $(this.el).html(model.view);
 
-        // get view
-        const view = $(this.el).children('.pd-view');
-
         // set saved scroll position
-        view.scrollTop(model._scroll_top);
-        view.scrollLeft(model._scroll_left);
+        model.view.scrollTop(model._scroll_top);
+        model.view.scrollLeft(model._scroll_left);
 
         // handle scroll events (scroll is not delegated and therefore can't be registered on the parent element)
-        view.on('scroll', (e) => {
+        model.view.on('scroll', (e: JQuery.ScrollEvent) => {
             const target = $(e.target);
 
             // get dimensions
             const rowHeight = $(this.el).find('tbody > tr:first').outerHeight() || 0;
 
-            // get positions
-            const currentScrollTop = target.scrollTop();
-            const targetScrollTop = this.round_to(currentScrollTop || 0, rowHeight);
-            const currentScrollLeft = target.scrollLeft();
-            const targetScrollLeft = currentScrollLeft || 0;
-
             // set scroll
+            const currentScrollTop = target.scrollTop() || 0;
+            const targetScrollTop = rowHeight * Math.round(currentScrollTop / rowHeight);
+            const currentScrollLeft = target.scrollLeft() || 0;
+            const targetScrollLeft = currentScrollLeft || 0;
             this.model.set('_scroll_top', targetScrollTop);
             this.model.set('_scroll_left', targetScrollLeft);
-            target.scrollTop(targetScrollTop);
-            target.scrollLeft(targetScrollLeft);
 
             // set position
             const currentPos = targetScrollTop / rowHeight;
-            if (Math.abs(currentPos - model.pos) > 10) {
+            if (Math.abs(currentPos - this.model.get('pos')) > 1000) {
                 this.model.set('pos', currentPos);
             }
-
-            e.preventDefault();
-            return false;
         });
 
         // update classes
@@ -231,5 +221,16 @@ export class PandasView extends DOMWidgetView {
 
         // send to backend
         this.send({ model: model });
+    }
+
+    scroll_changed(): void {
+        // get view
+        const view = $(this.el).children('.pd-view');
+
+        // wait and use value from last event
+        setTimeout(() => {
+            view.scrollTop(this.model.get('_scroll_top'));
+            view.scrollLeft(this.model.get('_scroll_left'));
+        }, 100);
     }
 }
