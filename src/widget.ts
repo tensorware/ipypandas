@@ -29,6 +29,7 @@ export class PandasModel extends DOMWidgetModel {
             _view_module_version: PandasModel.view_module_version,
             _scroll_top: 0,
             _scroll_left: 0,
+            _height: 0,
         };
     }
 }
@@ -37,6 +38,11 @@ export class PandasView extends DOMWidgetView {
     get_model(): any {
         const view = $('<div/>').addClass('pd-view');
         view.html(this.model.get('view'));
+
+        // empty
+        if (!view.find('tr').length) {
+            view.hide();
+        }
 
         return {
             view: view,
@@ -48,8 +54,9 @@ export class PandasView extends DOMWidgetView {
             max_colwidth: JSON.parse(this.model.get('max_colwidth')),
             row: JSON.parse(this.model.get('row')),
             col: JSON.parse(this.model.get('col')),
-            _scroll_top: JSON.parse(this.model.get('_scroll_top')),
-            _scroll_left: JSON.parse(this.model.get('_scroll_left')),
+            _scroll_top: this.model.get('_scroll_top'),
+            _scroll_left: this.model.get('_scroll_left'),
+            _height: this.model.get('_height'),
         };
     }
 
@@ -118,6 +125,8 @@ export class PandasView extends DOMWidgetView {
         this.model.on('change:_scroll_top', this.scroll_changed, this);
         this.model.on('change:_scroll_left', this.scroll_changed, this);
 
+        this.model.on('change:_height', this.height_changed, this);
+
         // register click events
         $(this.el).on('click', (e: JQuery.ClickEvent) => {
             const target = $(e.target);
@@ -127,6 +136,10 @@ export class PandasView extends DOMWidgetView {
             const level = this.get_num(target, 'pd-lvl');
 
             const model = this.get_model();
+
+            // save height
+            const view = $(this.el).children('.pd-view');
+            this.model.set('_height', view.height());
 
             // column clicked
             if (classes.includes('pd-col-head')) {
@@ -177,33 +190,14 @@ export class PandasView extends DOMWidgetView {
         // update view (rendered view html from pandas)
         $(this.el).html(model.view);
 
-        // set saved scroll position
+        // set scroll position
         model.view.scrollTop(model._scroll_top);
         model.view.scrollLeft(model._scroll_left);
 
-        // handle scroll events (scroll is not delegated and therefore can't be registered on the parent element)
-        model.view.on('scroll', (e: JQuery.ScrollEvent) => {
-            const target = $(e.target);
+        // set height
+        model.view.height(model._height);
 
-            // get dimensions
-            const rowHeight = $(this.el).find('tbody > tr:first').outerHeight() || 0;
-
-            // set scroll
-            const currentScrollTop = target.scrollTop() || 0;
-            const targetScrollTop = rowHeight * Math.round(currentScrollTop / rowHeight);
-            const currentScrollLeft = target.scrollLeft() || 0;
-            const targetScrollLeft = currentScrollLeft || 0;
-            this.model.set('_scroll_top', targetScrollTop);
-            this.model.set('_scroll_left', targetScrollLeft);
-
-            // set position
-            const currentPos = targetScrollTop / rowHeight;
-            if (Math.abs(currentPos - this.model.get('pos')) > 1000) {
-                this.model.set('pos', currentPos);
-            }
-        });
-
-        // update classes
+        // set action classes
         Object.entries(model.col).forEach(([key, value]: [string, any]) => {
             const target = $(`#${key}`);
             if (value.sort) {
@@ -217,10 +211,60 @@ export class PandasView extends DOMWidgetView {
             }
         });
 
-        console.log('---------- send ----------', model);
+        $.when(model.view).then((view: JQuery<HTMLElement>) => {
+            // get dimensions
+            const headerHeight = view.find('thead').outerHeight(true) || 0;
+            const rowHeight = view.find('tbody > tr:first').outerHeight(true) || 0;
 
-        // send to backend
-        this.send({ model: model });
+            // handle scroll events (scroll is not delegated and therefore can't be registered on the parent element)
+            view.on('scroll', (e: JQuery.ScrollEvent) => {
+                const target = $(e.target);
+
+                // set scroll
+                const currentScrollTop = target.scrollTop() || 0;
+                const targetScrollTop = rowHeight * Math.round(currentScrollTop / rowHeight);
+                const currentScrollLeft = target.scrollLeft() || 0;
+                const targetScrollLeft = currentScrollLeft || 0;
+                this.model.set('_scroll_top', targetScrollTop);
+                this.model.set('_scroll_left', targetScrollLeft);
+
+                // set position
+                const currentPos = targetScrollTop / rowHeight;
+                if (Math.abs(currentPos - this.model.get('pos')) > 1000) {
+                    this.model.set('pos', currentPos);
+                }
+            });
+
+            // set initial height
+            let maxHeight = headerHeight + model.size * rowHeight;
+            let minHeight = Math.min(maxHeight, headerHeight + model.min_rows * rowHeight);
+            view.css({
+                'min-height': minHeight + 'px',
+                'max-height': maxHeight + 'px',
+            });
+
+            // increase height in case horizontal scrollbars exists
+            const scrollBarHeight = view[0].offsetHeight - view[0].clientHeight;
+            maxHeight += scrollBarHeight;
+            minHeight += scrollBarHeight;
+            view.css({
+                'min-height': minHeight + 'px',
+                'max-height': maxHeight + 'px',
+            });
+
+            if (!this.model.get('_height')) {
+                if (model.size <= model.max_rows) {
+                    this.model.set('_height', maxHeight);
+                } else {
+                    this.model.set('_height', minHeight);
+                }
+            }
+
+            console.log('---------- send ----------', model);
+
+            // send to backend # TODO dont send view
+            this.send({ model: model });
+        });
     }
 
     scroll_changed(): void {
@@ -232,5 +276,13 @@ export class PandasView extends DOMWidgetView {
             view.scrollTop(this.model.get('_scroll_top'));
             view.scrollLeft(this.model.get('_scroll_left'));
         }, 100);
+    }
+
+    height_changed(): void {
+        // get view
+        const view = $(this.el).children('.pd-view');
+
+        // set height
+        view.height(this.model.get('_height'));
     }
 }
