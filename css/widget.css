@@ -1,3 +1,10 @@
+:root {
+    --pd-header-color: var(--jp-layout-color0);
+    --pd-border-color: var(--jp-border-color1);
+    --pd-border-width: 1px;
+    --pd-td-max-width: 50ch;
+}
+
 .pd-ipypandas {
     padding: 0;
     overflow: hidden;
@@ -14,30 +21,49 @@
     padding: 0;
 }
 
+.pd-ipypandas .pd-view .pd-table.pd-empty {
+    display: none;
+}
+
+.pd-ipypandas .pd-view .pd-table.pd-truncated tbody td {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: var(--pd-td-max-width);
+}
+
 .pd-ipypandas .pd-view .pd-table thead {
     top: 0;
     z-index: 2;
     position: sticky;
-    background-color: var(--jp-layout-color0);
-    box-shadow: 0px 1px var(--jp-border-color1);
+    background-color: var(--pd-header-color);
+    box-shadow: 0 var(--pd-border-width) var(--pd-border-color);
 }
 
 .pd-ipypandas .pd-view .pd-table tbody th {
     left: 0;
     z-index: 1;
     position: sticky;
-    background-color: var(--jp-layout-color0);
-    box-shadow: 1px 0px var(--jp-border-color1);
+    background-color: var(--pd-header-color);
+    box-shadow: var(--pd-border-width) 0 var(--pd-border-color);
 }
 
-.pd-ipypandas .pd-view .pd-table thead th.pd-sort-desc {
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head:hover {
+    cursor: pointer;
+}
+
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head.pd-sort-desc {
     background-color: red;
 }
 
-.pd-ipypandas .pd-view .pd-table thead th.pd-sort-asc {
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head.pd-sort-asc {
     background-color: green;
 }
 
-.pd-ipypandas .pd-view .pd-table tbody th.pd-state-selected {
+.pd-ipypandas .pd-view .pd-table tbody th.pd-row-head:hover {
+    cursor: pointer;
+}
+
+.pd-ipypandas .pd-view .pd-table tbody th.pd-row-head.pd-state-selected {
     background-color: blue;
 }

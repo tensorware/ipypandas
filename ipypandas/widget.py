@@ -82,11 +82,11 @@ class PandasWidget(DOMWidget):
 
         # init min rows
         if 'min_rows' not in kwargs:
-            self.min_rows = pd.get_option('display.min_rows') or 10
+            self.min_rows = pd.get_option('display.min_rows') or 0
 
         # init max rows
         if 'max_rows' not in kwargs:
-            self.max_rows = pd.get_option('display.max_rows') or 60
+            self.max_rows = pd.get_option('display.max_rows') or 0
 
         # init max columns
         if 'max_columns' not in kwargs:
@@ -94,7 +94,7 @@ class PandasWidget(DOMWidget):
 
         # init max colwidth
         if 'max_colwidth' not in kwargs:
-            self.max_colwidth = pd.get_option('display.max_colwidth') or 50
+            self.max_colwidth = pd.get_option('display.max_colwidth') or 0
 
     def message(self, widget, content, buffers=None):
         print('---------- message ----------')
@@ -159,10 +159,7 @@ class PandasWidget(DOMWidget):
 
         # update view html
         view = Styler(self._df, uuid=self.uuid, cell_ids=True, table_attributes='class="pd-table"')
-        self.view = view.set_table_styles(**self.styles()).to_html()
-
-    def styles(self):
-        css_class_names = {
+        self.view = view.set_table_styles(css_class_names={
             'level': 'pd-lvl-',
             'row': 'pd-row-',
             'col': 'pd-col-',
@@ -173,12 +170,7 @@ class PandasWidget(DOMWidget):
             'index_name': 'pd-idx',
             'data': 'pd-data',
             'blank': 'pd-blank'
-        }
-        table_styles_hover = [
-            dict(selector='th.pd-row-head:hover', props=[('cursor', 'pointer')]),
-            dict(selector='th.pd-col-head:hover', props=[('cursor', 'pointer')])
-        ]
-        return dict(css_class_names=css_class_names, table_styles=table_styles_hover)
+        }).to_html()
 
     def __repr__(self):
         return self._df.__repr__()

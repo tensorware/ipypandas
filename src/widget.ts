@@ -38,20 +38,28 @@ export class PandasView extends DOMWidgetView {
     get_model(): any {
         const view = $('<div/>').addClass('pd-view');
         view.html(this.model.get('view'));
+        const table = view.children('.pd-table');
 
-        // empty
-        if (!view.find('tr').length) {
-            view.hide();
+        // TODO footer shape text
+
+        // truncated content
+        if (this.model.get('max_colwidth')) {
+            table.addClass('pd-truncated');
+        }
+
+        // empty table
+        if (!table.find('tr').length) {
+            table.addClass('pd-empty');
         }
 
         return {
             view: view,
-            size: JSON.parse(this.model.get('size')),
-            pos: JSON.parse(this.model.get('pos')),
-            min_rows: JSON.parse(this.model.get('min_rows')),
-            max_rows: JSON.parse(this.model.get('max_rows')),
-            max_columns: JSON.parse(this.model.get('max_columns')),
-            max_colwidth: JSON.parse(this.model.get('max_colwidth')),
+            size: this.model.get('size'),
+            pos: this.model.get('pos'),
+            min_rows: this.model.get('min_rows'),
+            max_rows: this.model.get('max_rows'),
+            max_columns: this.model.get('max_columns'),
+            max_colwidth: this.model.get('max_colwidth'),
             row: JSON.parse(this.model.get('row')),
             col: JSON.parse(this.model.get('col')),
             _scroll_top: this.model.get('_scroll_top'),
@@ -252,8 +260,11 @@ export class PandasView extends DOMWidgetView {
                 'max-height': maxHeight + 'px',
             });
 
+            // set max characters per column
+            $('body')[0].style.setProperty('--pd-td-max-width', model.max_colwidth + 'ch');
+
             if (!this.model.get('_height')) {
-                if (model.size <= model.max_rows) {
+                if (!model.max_rows || model.max_rows >= model.size) {
                     this.model.set('_height', maxHeight);
                 } else {
                     this.model.set('_height', minHeight);
