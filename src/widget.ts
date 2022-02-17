@@ -5,6 +5,15 @@ import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/ba
 import { MODULE_NAME, MODULE_VERSION } from './version';
 import '../css/widget.css';
 
+/*
+TODO
+  - implement proper viewport height
+  - fix row selector swapping
+  - fix lazy loading flickering
+  - fix mouse scroll focus
+  - move helper methods
+*/
+
 export class PandasModel extends DOMWidgetModel {
     static serializers: ISerializers = {
         ...DOMWidgetModel.serializers,
@@ -29,25 +38,47 @@ export class PandasModel extends DOMWidgetModel {
             _view_module_version: PandasModel.view_module_version,
             _scroll_top: 0,
             _scroll_left: 0,
-            _height: 0,
+            _view_height: 0,
+            _center_row: 0,
         };
     }
 }
 
 export class PandasView extends DOMWidgetView {
+    render(): void {
+        console.log('---------- render ----------');
+
+        this.el.classList.add(...['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas']);
+
+        // init
+        this.update_data();
+
+        // register change events
+        this.model.on('change:view', this.update_data, this);
+
+        this.model.on('change:start_rows', this.update_data, this);
+        this.model.on('change:end_rows', this.update_data, this);
+
+        this.model.on('change:col', this.update_table, this);
+        this.model.on('change:row', this.update_table, this);
+
+        this.model.on('change:_scroll_top', this.update_view, this);
+        this.model.on('change:_scroll_left', this.update_view, this);
+        this.model.on('change:_view_height', this.update_view, this);
+        this.model.on('change:_center_row', this.update_view, this);
+    }
+
     get_view(): JQuery<HTMLElement> {
         const view = $('<div/>').addClass('pd-view');
 
-        // table
+        // html from pandas table
         view.html(this.model.get('view'));
         const table = view.children('.pd-table');
 
-        // truncated content
+        // add table classes
         if (this.model.get('max_colwidth')) {
             table.addClass('pd-truncated');
         }
-
-        // empty table
         if (!table.find('tr').length) {
             table.addClass('pd-empty');
         }
@@ -66,24 +97,6 @@ export class PandasView extends DOMWidgetView {
         footer.append(shape);
 
         return footer;
-    }
-
-    get_model(): any {
-        return {
-            n_rows: this.model.get('n_rows'),
-            n_cols: this.model.get('n_cols'),
-            min_rows: this.model.get('min_rows'),
-            max_rows: this.model.get('max_rows'),
-            max_columns: this.model.get('max_columns'),
-            max_colwidth: this.model.get('max_colwidth'),
-            pos_rows: this.model.get('pos_rows'),
-            pos_cols: this.model.get('pos_cols'),
-            row: JSON.parse(this.model.get('row')),
-            col: JSON.parse(this.model.get('col')),
-            _scroll_top: this.model.get('_scroll_top'),
-            _scroll_left: this.model.get('_scroll_left'),
-            _height: this.model.get('_height'),
-        };
     }
 
     get_class(target: JQuery<HTMLElement>, match: string): string {
@@ -128,227 +141,258 @@ export class PandasView extends DOMWidgetView {
         return multiple * Math.round(number / multiple);
     }
 
-    render(): void {
-        const classes_root = ['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas'];
-        const classes_sort = ['pd-sort-desc', 'pd-sort-asc', ''];
-        const classes_state = ['pd-state-selected', ''];
-        this.el.classList.add(...classes_root);
+    on_scroll(view: JQuery<HTMLElement>): boolean {
+        const body = view.find('.pd-table > tbody');
+        const row_height = body.find('tr:first').outerHeight() || 0;
 
-        // initial view
-        this.value_changed();
-        this.scroll_changed();
+        // set model scroll
+        this.model.set('_scroll_top', this.round_to(view.scrollTop() || 0, row_height));
+        this.model.set('_scroll_left', view.scrollLeft() || 0);
 
-        // register change events
-        this.model.on('change:view', this.value_changed, this);
+        // set model position
+        const center_delta = this.model.get('min_rows') / 2;
+        const center_row = this.model.get('_scroll_top') / row_height + center_delta;
+        const update_range = Math.abs(center_row - this.model.get('_center_row')) >= center_delta;
+        const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
 
-        this.model.on('change:n_rows', this.value_changed, this);
-        this.model.on('change:n_cols', this.value_changed, this);
+        if (update_range && lazy_load) {
+            this.model.set('_center_row', center_row);
+            this.set_range(view);
+            return true;
+        }
 
-        this.model.on('change:min_rows', this.value_changed, this);
-        this.model.on('change:max_rows', this.value_changed, this);
-        this.model.on('change:max_columns', this.value_changed, this);
-        this.model.on('change:max_colwidth', this.value_changed, this);
-
-        this.model.on('change:pos_rows', this.value_changed, this);
-        this.model.on('change:pos_cols', this.value_changed, this);
-
-        this.model.on('change:col', this.value_changed, this);
-        this.model.on('change:row', this.value_changed, this);
-
-        this.model.on('change:_scroll_top', this.scroll_changed, this);
-        this.model.on('change:_scroll_left', this.scroll_changed, this);
-
-        this.model.on('change:_height', this.height_changed, this);
-
-        // register click events
-        $(this.el).on('click', (e: JQuery.ClickEvent) => {
-            const target = $(e.target);
-            const id = target.attr('id') || '';
-
-            const classes = (target.attr('class') || '').split(/\s+/);
-            const level = this.get_num(target, 'pd-lvl');
-
-            const model = this.get_model();
-
-            // save height
-            const view = $(this.el).children('.pd-view');
-            this.model.set('_height', view.height());
-
-            // column clicked
-            if (classes.includes('pd-col-head')) {
-                this.rotate_class(target, classes_sort);
-
-                const col = this.get_num(target, 'pd-col');
-                const sort = this.get_str(target, 'pd-sort');
-
-                if (sort) {
-                    model['col'][id] = {
-                        index: col,
-                        level: level,
-                        sort: sort,
-                    };
-                } else {
-                    delete model['col'][id];
-                }
-
-                this.model.set('col', JSON.stringify(model.col));
-            }
-
-            // row clicked
-            if (classes.includes('pd-row-head')) {
-                this.rotate_class(target, classes_state);
-
-                const row = this.get_num(target, 'pd-row');
-                const state = this.get_str(target, 'pd-state');
-
-                if (state) {
-                    model['row'][id] = {
-                        index: row,
-                        level: level,
-                        state: state,
-                    };
-                } else {
-                    delete model['row'][id];
-                }
-
-                this.model.set('row', JSON.stringify(model.row));
-            }
-        });
+        return false;
     }
 
-    value_changed(): void {
-        // get model
-        const model = this.get_model();
+    on_sort(th: JQuery<HTMLElement>): boolean {
+        this.rotate_class(th, ['pd-sort-desc', 'pd-sort-asc', '']);
+
+        const index = this.get_num(th, 'pd-col');
+        const level = this.get_num(th, 'pd-lvl');
+        const sort = this.get_str(th, 'pd-sort');
+
+        const col = JSON.parse(this.model.get('col'));
+        const id = th.attr('id') || '';
+
+        // update object
+        if (sort) {
+            col[id] = {
+                index: index,
+                level: level,
+                sort: sort,
+            };
+        } else {
+            delete col[id];
+        }
+
+        // set model col
+        this.model.set('col', JSON.stringify(col));
+
+        return true;
+    }
+
+    on_select(th: JQuery<HTMLElement>): boolean {
+        this.rotate_class(th, ['pd-state-selected', '']);
+
+        const index = this.get_num(th, 'pd-row');
+        const level = this.get_num(th, 'pd-lvl');
+        const state = this.get_str(th, 'pd-state');
+
+        const row = JSON.parse(this.model.get('row'));
+        const id = th.attr('id') || '';
+
+        // update object
+        if (state) {
+            row[id] = {
+                index: index,
+                level: level,
+                state: state,
+            };
+        } else {
+            delete row[id];
+        }
+
+        // set model row
+        this.model.set('row', JSON.stringify(row));
+
+        return true;
+    }
+
+    set_range(view: JQuery<HTMLElement>): void {
+        const body = view.find('.pd-table > tbody');
+        const row_height = body.find('tr:first').outerHeight() || 0;
+        const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
+
+        // init center row
+        if (!this.model.get('_center_row')) {
+            this.model.set('_center_row', Math.round(this.model.get('min_rows') / 2));
+        }
+
+        // calculate row ranges
+        let start_rows = Math.max(0, this.model.get('_center_row') - this.model.get('min_rows'));
+        let end_rows = Math.min(this.model.get('n_rows'), this.model.get('_center_row') + this.model.get('min_rows'));
+        if (!lazy_load) {
+            start_rows = 0;
+            end_rows = this.model.get('n_rows');
+        }
+
+        // set viewport padding
+        const padding_top = start_rows * row_height;
+        const padding_bottom = (this.model.get('n_rows') - end_rows) * row_height;
+        body.css({
+            '--pd-body-padding-top': padding_top + 'px',
+            '--pd-body-padding-bottom': padding_bottom + 'px',
+            '--pd-body-td-max-width': this.model.get('max_colwidth') + 'ch',
+        });
+
+        // set model range
+        this.model.set('start_rows', start_rows);
+        this.model.set('end_rows', end_rows);
+    }
+
+    set_height(view: JQuery<HTMLElement>): void {
+        const head = view.find('.pd-table > thead');
+        const body = view.find('.pd-table > tbody');
+        const header_height = head.outerHeight() || 0;
+        const row_height = body.find('tr:first').outerHeight() || 0;
+        const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
+
+        // calculate height ranges
+        let max_height = view.find('.pd-table').outerHeight() || 0;
+        let min_height = Math.min(max_height, header_height + this.model.get('min_rows') * row_height);
+
+        // set viewport height
+        view.css({
+            '--pd-view-min-height': min_height + 'px',
+            '--pd-view-max-height': max_height + 'px',
+        });
+
+        // increase viewport height (in case horizontal scrollbars exists)
+        const scrollBarHeight = view[0].offsetHeight - view[0].clientHeight;
+        max_height += scrollBarHeight;
+        min_height += scrollBarHeight;
+        view.css({
+            '--pd-view-min-height': min_height + 'px',
+            '--pd-view-max-height': max_height + 'px',
+        });
+
+        // set model height
+        if (!this.model.get('_view_height')) {
+            this.model.set('_view_height', !lazy_load ? max_height : min_height);
+        } else {
+            this.model.set('_view_height', view.height());
+        }
+    }
+
+    update_data(): void {
+        console.log('---------- update_data ----------');
+
         const root = $(this.el).empty();
 
-        // update view (rendered view html from pandas)
+        // append view
         const view = this.get_view();
         root.append(view);
 
-        // update footer
+        // append footer
         const footer = this.get_footer();
         root.append(footer);
 
-        // set scroll position
-        view.scrollTop(model._scroll_top);
-        view.scrollLeft(model._scroll_left);
+        // update table
+        this.update_table();
 
-        // set height
-        view.height(model._height);
+        // update viewport
+        this.update_view();
 
-        // set action classes
-        Object.entries(model.col).forEach(([key, value]: [string, any]) => {
-            const target = $(`#${key}`);
-            if (value.sort) {
-                target.addClass(`pd-sort-${value.sort}`);
-            }
-        });
-        Object.entries(model.row).forEach(([key, value]: [string, any]) => {
-            const target = $(`#${key}`);
-            if (value.state) {
-                target.addClass(`pd-state-${value.state}`);
-            }
-        });
-
-        $.when(view).then((view: JQuery<HTMLElement>) => {
-            // get dimensions
-            const table = view.children('.pd-table');
-            const head = table.children('thead');
-            const body = table.children('tbody');
-
-            const headerHeight = head.outerHeight() || 0;
-            const rowHeight = body.children('tr:first').outerHeight() || 0;
-
-            // handle scroll events (scroll is not delegated and therefore can't be registered on the parent element)
+        $.when(view).then(() => {
+            // handle events
             view.on('scroll', (e: JQuery.ScrollEvent) => {
                 const target = $(e.target);
 
-                // set scroll
-                const currentScrollTop = target.scrollTop() || 0;
-                const targetScrollTop = this.round_to(currentScrollTop, rowHeight);
-                const currentScrollLeft = target.scrollLeft() || 0;
-                const targetScrollLeft = currentScrollLeft || 0;
-
-                this.model.set('_scroll_top', targetScrollTop);
-                this.model.set('_scroll_left', targetScrollLeft);
-
-                // set position
-                const centerDelta = this.model.get('min_rows') / 2;
-                const centerPos = targetScrollTop / rowHeight + centerDelta;
-                if (Math.abs(centerPos - this.model.get('pos_rows')) >= centerDelta) {
-                    //this.model.set('pos_rows', this.round_to(centerPos, centerDelta));
-                    this.model.set('pos_rows', centerPos);
+                // vertical or horizontal scrolling
+                if (this.on_scroll(target)) {
+                    this.send_data();
                 }
-                console.log(centerPos, rowHeight, currentScrollTop);
-            });
+            }).on('click', (e: JQuery.ClickEvent) => {
+                const target = $(e.target);
+                const classes = (target.attr('class') || '').split(/\s+/);
 
-            const start = Math.max(0, model.pos_rows - model.min_rows);
-            const end = Math.min(model.n_rows, model.pos_rows + model.min_rows);
-
-            // set viewport margin
-            const marginTop = start * rowHeight;
-            const marginBottom = (model.n_rows - end) * rowHeight;
-
-            body.css({
-                '--pd-body-padding-top': marginTop + 'px',
-                '--pd-body-padding-bottom': marginBottom + 'px',
-                '--pd-body-td-max-width': model.max_colwidth + 'ch',
-            });
-            console.log(this.model.get('pos_rows'), start, end, marginTop, marginBottom, marginTop + marginBottom + (end - start) * rowHeight);
-
-            // set scroll position
-            view.scrollTop(model._scroll_top);
-            view.scrollLeft(model._scroll_left);
-
-            // set initial height
-            let maxHeight = table.outerHeight() || 0;
-            let minHeight = Math.min(maxHeight, headerHeight + model.min_rows * rowHeight);
-            view.css({
-                '--pd-view-min-height': minHeight + 'px',
-                '--pd-view-max-height': maxHeight + 'px',
-            });
-
-            // increase height in case horizontal scrollbars exists
-            const scrollBarHeight = view[0].offsetHeight - view[0].clientHeight;
-            maxHeight += scrollBarHeight;
-            minHeight += scrollBarHeight;
-            view.css({
-                '--pd-view-min-height': minHeight + 'px',
-                '--pd-view-max-height': maxHeight + 'px',
-            });
-
-            // set height
-            if (!this.model.get('_height')) {
-                if (!model.max_rows || model.n_rows <= model.max_rows) {
-                    this.model.set('_height', maxHeight);
-                } else {
-                    this.model.set('_height', minHeight);
+                // resize handler clicked
+                if (classes.includes('pd-view')) {
+                    this.set_height(target);
                 }
-            }
 
-            //console.log('---------- send ----------', this.get_model());
+                // column header clicked
+                if (classes.includes('pd-col-head')) {
+                    if (this.on_sort(target)) {
+                        this.send_data();
+                    }
+                }
 
-            // send to backend
-            this.send({ model: this.get_model() });
+                // row index clicked
+                if (classes.includes('pd-row-head')) {
+                    if (this.on_select(target)) {
+                        this.send_data();
+                    }
+                }
+            });
+
+            // set viewport range
+            this.set_range(view);
+
+            // set viewport height
+            this.set_height(view);
+
+            // update viewport
+            this.update_view();
         });
     }
 
-    scroll_changed(): void {
-        // get view
-        const view = $(this.el).children('.pd-view');
+    update_table(): void {
+        console.log('---------- update_table ----------');
 
-        // wait and use value from last event
-        setTimeout(() => {
-            view.scrollTop(this.model.get('_scroll_top'));
-            view.scrollLeft(this.model.get('_scroll_left'));
-        }, 100);
+        // set column classes
+        Object.entries(JSON.parse(this.model.get('col'))).forEach(([key, value]: [string, any]) => {
+            const column = $(`#${key}`);
+            if (value.sort) {
+                column.addClass(`pd-sort-${value.sort}`);
+            }
+        });
+
+        // set row classes
+        Object.entries(JSON.parse(this.model.get('row'))).forEach(([key, value]: [string, any]) => {
+            const row = $(`#${key}`);
+            if (value.state) {
+                row.addClass(`pd-state-${value.state}`);
+            }
+        });
     }
 
-    height_changed(): void {
-        // get view
+    update_view(): void {
+        console.log('---------- update_view ----------');
+
         const view = $(this.el).children('.pd-view');
 
+        // set scroll position
+        view.scrollTop(this.model.get('_scroll_top'));
+        view.scrollLeft(this.model.get('_scroll_left'));
+
         // set height
-        view.height(this.model.get('_height'));
+        view.height(this.model.get('_view_height'));
+    }
+
+    send_data(): void {
+        const model = {
+            start_rows: this.model.get('start_rows'),
+            end_rows: this.model.get('end_rows'),
+            row: JSON.parse(this.model.get('row')),
+            col: JSON.parse(this.model.get('col')),
+        };
+
+        console.log('---------- send ----------', model);
+
+        // send model to backend
+        this.send({
+            model: model,
+        });
     }
 }
