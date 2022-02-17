@@ -7,8 +7,9 @@ import '../css/widget.css';
 
 /*
 TODO
-  - implement proper viewport height
+  - increase viewport range
   - fix row selector swapping
+  - fix viewport resizing
   - fix lazy loading flickering
   - fix mouse scroll focus
   - move helper methods
@@ -38,8 +39,9 @@ export class PandasModel extends DOMWidgetModel {
             _view_module_version: PandasModel.view_module_version,
             _scroll_top: 0,
             _scroll_left: 0,
-            _view_height: 0,
             _center_row: 0,
+            _view_height: 0,
+            _view_rows: 0,
         };
     }
 }
@@ -64,8 +66,9 @@ export class PandasView extends DOMWidgetView {
 
         this.model.on('change:_scroll_top', this.update_view, this);
         this.model.on('change:_scroll_left', this.update_view, this);
-        this.model.on('change:_view_height', this.update_view, this);
         this.model.on('change:_center_row', this.update_view, this);
+        this.model.on('change:_view_height', this.update_view, this);
+        this.model.on('change:_view_rows', this.update_view, this);
     }
 
     get_view(): JQuery<HTMLElement> {
@@ -141,19 +144,38 @@ export class PandasView extends DOMWidgetView {
         return multiple * Math.round(number / multiple);
     }
 
+    on_resize(view: JQuery<HTMLElement>): boolean {
+        const body = view.find('.pd-table > tbody');
+        const row_height = body.find('tr:first').outerHeight() || 0;
+
+        // set model height
+        this.model.set('_view_height', view.height());
+
+        // set model rows
+        this.model.set('_view_rows', this.round_to(this.model.get('_view_height'), row_height) / row_height);
+
+        // set viewport range
+        this.set_range(view);
+
+        // set viewport height
+        this.set_height(view);
+
+        return true;
+    }
+
     on_scroll(view: JQuery<HTMLElement>): boolean {
         const body = view.find('.pd-table > tbody');
         const row_height = body.find('tr:first').outerHeight() || 0;
+        const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
 
         // set model scroll
         this.model.set('_scroll_top', this.round_to(view.scrollTop() || 0, row_height));
         this.model.set('_scroll_left', view.scrollLeft() || 0);
 
         // set model position
-        const center_delta = this.model.get('min_rows') / 2;
+        const center_delta = Math.round(this.model.get('_view_rows') / 2);
         const center_row = this.model.get('_scroll_top') / row_height + center_delta;
         const update_range = Math.abs(center_row - this.model.get('_center_row')) >= center_delta;
-        const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
 
         if (update_range && lazy_load) {
             this.model.set('_center_row', center_row);
@@ -223,14 +245,17 @@ export class PandasView extends DOMWidgetView {
         const row_height = body.find('tr:first').outerHeight() || 0;
         const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
 
-        // init center row
+        // init default values
         if (!this.model.get('_center_row')) {
             this.model.set('_center_row', Math.round(this.model.get('min_rows') / 2));
         }
+        if (!this.model.get('_view_rows')) {
+            this.model.set('_view_rows', this.model.get('min_rows'));
+        }
 
         // calculate row ranges
-        let start_rows = Math.max(0, this.model.get('_center_row') - this.model.get('min_rows'));
-        let end_rows = Math.min(this.model.get('n_rows'), this.model.get('_center_row') + this.model.get('min_rows'));
+        let start_rows = Math.max(0, this.model.get('_center_row') - this.model.get('_view_rows'));
+        let end_rows = Math.min(this.model.get('n_rows'), this.model.get('_center_row') + this.model.get('_view_rows'));
         if (!lazy_load) {
             start_rows = 0;
             end_rows = this.model.get('n_rows');
@@ -268,9 +293,9 @@ export class PandasView extends DOMWidgetView {
         });
 
         // increase viewport height (in case horizontal scrollbars exists)
-        const scrollBarHeight = view[0].offsetHeight - view[0].clientHeight;
-        max_height += scrollBarHeight;
-        min_height += scrollBarHeight;
+        const scroll_bar_height = view[0].offsetHeight - view[0].clientHeight;
+        max_height += scroll_bar_height;
+        min_height += scroll_bar_height;
         view.css({
             '--pd-view-min-height': min_height + 'px',
             '--pd-view-max-height': max_height + 'px',
@@ -318,7 +343,9 @@ export class PandasView extends DOMWidgetView {
 
                 // resize handler clicked
                 if (classes.includes('pd-view')) {
-                    this.set_height(target);
+                    if (this.on_resize(target)) {
+                        this.send_data();
+                    }
                 }
 
                 // column header clicked
