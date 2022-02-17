@@ -40,15 +40,15 @@ class PandasWidget(DOMWidget):
     n_rows = Integer(0).tag(sync=True)
     n_cols = Integer(0).tag(sync=True)
 
-    # viewport
-    pos_rows = Integer(0).tag(sync=True)
-    pos_cols = Integer(0).tag(sync=True)
-
     # ranges
     min_rows = Integer(0).tag(sync=True)
     max_rows = Integer(0).tag(sync=True)
     max_columns = Integer(0).tag(sync=True)
     max_colwidth = Integer(0).tag(sync=True)
+
+    # viewport
+    pos_rows = Integer(0).tag(sync=True)
+    pos_cols = Integer(0).tag(sync=True)
 
     # row and column actions
     row = Unicode('{}').tag(sync=True)
@@ -81,14 +81,6 @@ class PandasWidget(DOMWidget):
         self.n_rows = self._df.shape[0]
         self.n_cols = self._df.shape[1]
 
-        # init pos rows
-        if 'pos_rows' not in kwargs:
-            self.pos_rows = 0
-
-        # init pos cols
-        if 'pos_cols' not in kwargs:
-            self.pos_cols = 0
-
         # init min rows
         if 'min_rows' not in kwargs:
             self.min_rows = pd.get_option('display.min_rows') or 0
@@ -104,6 +96,14 @@ class PandasWidget(DOMWidget):
         # init max colwidth
         if 'max_colwidth' not in kwargs:
             self.max_colwidth = pd.get_option('display.max_colwidth') or 0
+
+        # init pos rows
+        if 'pos_rows' not in kwargs:
+            self.pos_rows = self.min_rows // 2
+
+        # init pos cols
+        if 'pos_cols' not in kwargs:
+            self.pos_cols = 0
 
     def message(self, widget, content, buffers=None):
         print('---------- message ----------')
@@ -154,15 +154,13 @@ class PandasWidget(DOMWidget):
             self._df.sort_values(**sort_args)
 
     def slice(self, model):
-        start, end = model['pos_rows'], model['pos_rows'] + model['max_rows']
-
-        for col in model['col'].values():
-            pass  # TODO slice viewport data
+        start = max(0, model['pos_rows'] - model['min_rows'])
+        end = min(self.n_rows, model['pos_rows'] + model['min_rows'])
 
         print(f'start={start}, end={end}')
 
         # slice dataframe
-        # self._df = self._df.iloc[start: end]
+        self._df = self._df.iloc[start: end]
 
     def update(self):
 

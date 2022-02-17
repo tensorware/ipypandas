@@ -1,12 +1,21 @@
 :root {
+    --pd-view-min-height: 0px;
+    --pd-view-max-height: 0px;
+
     --pd-header-color: var(--jp-layout-color0);
     --pd-border-color: var(--jp-border-color1);
     --pd-border-width: 1px;
-    --pd-td-max-width: 1ch;
-    --pd-footer-padding: 12px;
+
+    --pd-body-padding-top: 0px;
+    --pd-body-padding-bottom: 0px;
+    --pd-body-td-max-width: 1ch;
+
+    --pd-footer-padding-top: 12px;
+    --pd-footer-padding-bottom: 0px;
 }
 
 .pd-ipypandas {
+    margin: 0;
     padding: 0;
     overflow: hidden;
 }
@@ -15,6 +24,8 @@
     height: 0;
     overflow: auto;
     resize: vertical;
+    min-height: var(--pd-view-min-height);
+    max-height: var(--pd-view-max-height);
 }
 
 .pd-ipypandas .pd-view .pd-table {
@@ -30,7 +41,7 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    max-width: var(--pd-td-max-width);
+    max-width: var(--pd-body-td-max-width);
 }
 
 .pd-ipypandas .pd-view .pd-table thead {
@@ -39,14 +50,6 @@
     position: sticky;
     background-color: var(--pd-header-color);
     box-shadow: 0 var(--pd-border-width) var(--pd-border-color);
-}
-
-.pd-ipypandas .pd-view .pd-table tbody th {
-    left: 0;
-    z-index: 1;
-    position: sticky;
-    background-color: var(--pd-header-color);
-    box-shadow: var(--pd-border-width) 0 var(--pd-border-color);
 }
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head:hover {
@@ -61,6 +64,26 @@
     background-color: green;
 }
 
+.pd-ipypandas .pd-view .pd-table tbody::before {
+    content: '';
+    display: table-row;
+    height: var(--pd-body-padding-top);
+}
+
+.pd-ipypandas .pd-view .pd-table tbody::after {
+    content: '';
+    display: table-row;
+    height: var(--pd-body-padding-bottom);
+}
+
+.pd-ipypandas .pd-view .pd-table tbody th {
+    left: 0;
+    z-index: 1;
+    position: sticky;
+    background-color: var(--pd-header-color);
+    box-shadow: var(--pd-border-width) 0 var(--pd-border-color);
+}
+
 .pd-ipypandas .pd-view .pd-table tbody th.pd-row-head:hover {
     cursor: pointer;
 }
@@ -70,5 +93,6 @@
 }
 
 .pd-ipypandas .pd-footer {
-    padding-top: var(--pd-footer-padding);
+    padding-top: var(--pd-footer-padding-top);
+    padding-bottom: var(--pd-footer-padding-bottom);
 }

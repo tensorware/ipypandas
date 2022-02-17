@@ -72,12 +72,12 @@ export class PandasView extends DOMWidgetView {
         return {
             n_rows: this.model.get('n_rows'),
             n_cols: this.model.get('n_cols'),
-            pos_rows: this.model.get('pos_rows'),
-            pos_cols: this.model.get('pos_cols'),
             min_rows: this.model.get('min_rows'),
             max_rows: this.model.get('max_rows'),
             max_columns: this.model.get('max_columns'),
             max_colwidth: this.model.get('max_colwidth'),
+            pos_rows: this.model.get('pos_rows'),
+            pos_cols: this.model.get('pos_cols'),
             row: JSON.parse(this.model.get('row')),
             col: JSON.parse(this.model.get('col')),
             _scroll_top: this.model.get('_scroll_top'),
@@ -124,6 +124,10 @@ export class PandasView extends DOMWidgetView {
         return classes[0];
     }
 
+    round_to(number: number, multiple: number): number {
+        return multiple * Math.round(number / multiple);
+    }
+
     render(): void {
         const classes_root = ['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas'];
         const classes_sort = ['pd-sort-desc', 'pd-sort-asc', ''];
@@ -140,13 +144,13 @@ export class PandasView extends DOMWidgetView {
         this.model.on('change:n_rows', this.value_changed, this);
         this.model.on('change:n_cols', this.value_changed, this);
 
-        this.model.on('change:pos_rows', this.value_changed, this);
-        this.model.on('change:pos_cols', this.value_changed, this);
-
         this.model.on('change:min_rows', this.value_changed, this);
         this.model.on('change:max_rows', this.value_changed, this);
         this.model.on('change:max_columns', this.value_changed, this);
         this.model.on('change:max_colwidth', this.value_changed, this);
+
+        this.model.on('change:pos_rows', this.value_changed, this);
+        this.model.on('change:pos_cols', this.value_changed, this);
 
         this.model.on('change:col', this.value_changed, this);
         this.model.on('change:row', this.value_changed, this);
@@ -249,8 +253,11 @@ export class PandasView extends DOMWidgetView {
         $.when(view).then((view: JQuery<HTMLElement>) => {
             // get dimensions
             const table = view.children('.pd-table');
-            const headerHeight = table.find('thead').outerHeight() || 0;
-            const rowHeight = table.find('tbody > tr:first').outerHeight() || 0;
+            const head = table.children('thead');
+            const body = table.children('tbody');
+
+            const headerHeight = head.outerHeight() || 0;
+            const rowHeight = body.children('tr:first').outerHeight() || 0;
 
             // handle scroll events (scroll is not delegated and therefore can't be registered on the parent element)
             view.on('scroll', (e: JQuery.ScrollEvent) => {
@@ -258,28 +265,47 @@ export class PandasView extends DOMWidgetView {
 
                 // set scroll
                 const currentScrollTop = target.scrollTop() || 0;
-                const targetScrollTop = rowHeight * Math.round(currentScrollTop / rowHeight);
+                const targetScrollTop = this.round_to(currentScrollTop, rowHeight);
                 const currentScrollLeft = target.scrollLeft() || 0;
                 const targetScrollLeft = currentScrollLeft || 0;
+
                 this.model.set('_scroll_top', targetScrollTop);
                 this.model.set('_scroll_left', targetScrollLeft);
 
                 // set position
-                const currentPos = targetScrollTop / rowHeight;
-                if (Math.abs(currentPos - this.model.get('pos_rows')) > 1000) {
-                    this.model.set('pos_rows', currentPos);
+                const centerDelta = this.model.get('min_rows') / 2;
+                const centerPos = targetScrollTop / rowHeight + centerDelta;
+                if (Math.abs(centerPos - this.model.get('pos_rows')) >= centerDelta) {
+                    //this.model.set('pos_rows', this.round_to(centerPos, centerDelta));
+                    this.model.set('pos_rows', centerPos);
                 }
+                console.log(centerPos, rowHeight, currentScrollTop);
             });
 
-            // set max characters per column
-            $('body')[0].style.setProperty('--pd-td-max-width', model.max_colwidth + 'ch');
+            const start = Math.max(0, model.pos_rows - model.min_rows);
+            const end = Math.min(model.n_rows, model.pos_rows + model.min_rows);
+
+            // set viewport margin
+            const marginTop = start * rowHeight;
+            const marginBottom = (model.n_rows - end) * rowHeight;
+
+            body.css({
+                '--pd-body-padding-top': marginTop + 'px',
+                '--pd-body-padding-bottom': marginBottom + 'px',
+                '--pd-body-td-max-width': model.max_colwidth + 'ch',
+            });
+            console.log(this.model.get('pos_rows'), start, end, marginTop, marginBottom, marginTop + marginBottom + (end - start) * rowHeight);
+
+            // set scroll position
+            view.scrollTop(model._scroll_top);
+            view.scrollLeft(model._scroll_left);
 
             // set initial height
             let maxHeight = table.outerHeight() || 0;
             let minHeight = Math.min(maxHeight, headerHeight + model.min_rows * rowHeight);
             view.css({
-                'min-height': minHeight + 'px',
-                'max-height': maxHeight + 'px',
+                '--pd-view-min-height': minHeight + 'px',
+                '--pd-view-max-height': maxHeight + 'px',
             });
 
             // increase height in case horizontal scrollbars exists
@@ -287,8 +313,8 @@ export class PandasView extends DOMWidgetView {
             maxHeight += scrollBarHeight;
             minHeight += scrollBarHeight;
             view.css({
-                'min-height': minHeight + 'px',
-                'max-height': maxHeight + 'px',
+                '--pd-view-min-height': minHeight + 'px',
+                '--pd-view-max-height': maxHeight + 'px',
             });
 
             // set height
@@ -300,10 +326,10 @@ export class PandasView extends DOMWidgetView {
                 }
             }
 
-            console.log('---------- send ----------', model);
+            //console.log('---------- send ----------', this.get_model());
 
             // send to backend
-            this.send({ model: model });
+            this.send({ model: this.get_model() });
         });
     }
 
