@@ -90,7 +90,7 @@ class PandasWidget(DOMWidget):
 
         # init window size factor
         if 'win_sizefactor' not in kwargs:
-            self.win_sizefactor = 4
+            self.win_sizefactor = 10
 
         # init start rows
         if 'start_rows' not in kwargs:

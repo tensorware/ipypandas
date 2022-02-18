@@ -2,6 +2,7 @@
     --pd-view-min-height: 0px;
     --pd-view-max-height: 0px;
 
+    --pd-font-color: var(--jp-ui-font-color1);
     --pd-header-color: var(--jp-layout-color0);
     --pd-border-color: var(--jp-border-color1);
     --pd-border-width: 1px;
@@ -9,6 +10,7 @@
     --pd-body-padding-top: 0px;
     --pd-body-padding-bottom: 0px;
     --pd-body-td-max-width: 1ch;
+    --pd-body-tr-select-color: var(--jp-rendermime-table-row-hover-background);
 
     --pd-footer-padding-top: 12px;
     --pd-footer-padding-bottom: 0px;
@@ -56,12 +58,22 @@
     cursor: pointer;
 }
 
-.pd-ipypandas .pd-view .pd-table thead th.pd-col-head.pd-sort-desc {
-    background-color: red;
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head.pd-sort-desc::before {
+    content: '';
+    margin-right: 3px;
+    display: inline-block;
+    border: 4px solid transparent;
+    border-top: 8px solid var(--pd-font-color);
+    border-bottom-width: 0;
 }
 
-.pd-ipypandas .pd-view .pd-table thead th.pd-col-head.pd-sort-asc {
-    background-color: green;
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head.pd-sort-asc::before {
+    content: '';
+    margin-right: 3px;
+    display: inline-block;
+    border: 4px solid transparent;
+    border-bottom: 8px solid var(--pd-font-color);
+    border-top-width: 0;
 }
 
 .pd-ipypandas .pd-view .pd-table tbody::before {
@@ -89,7 +101,7 @@
 }
 
 .pd-ipypandas .pd-view .pd-table tbody th.pd-row-head.pd-select-checked {
-    background-color: blue;
+    background-color: var(--pd-body-tr-select-color);
 }
 
 .pd-ipypandas .pd-footer {
