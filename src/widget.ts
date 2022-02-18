@@ -5,12 +5,6 @@ import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/ba
 import { MODULE_NAME, MODULE_VERSION } from './version';
 import '../css/widget.css';
 
-/*
-TODO
-  - fix lazy loading flickering
-  - fix mouse scroll focus
-*/
-
 export class PandasModel extends DOMWidgetModel {
     static serializers: ISerializers = {
         ...DOMWidgetModel.serializers,
@@ -44,8 +38,6 @@ export class PandasModel extends DOMWidgetModel {
 
 export class PandasView extends DOMWidgetView {
     render(): void {
-        console.log('---------- render ----------');
-
         this.el.classList.add(...['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas']);
 
         // init
@@ -261,8 +253,10 @@ export class PandasView extends DOMWidgetView {
     }
 
     update_data(): void {
-        console.log('---------- update_data ----------');
-
+        /* TODO
+         - fix lazy loading flickering
+         - fix mouse scroll focus
+        */
         const root = $(this.el).empty();
 
         // append view
@@ -326,8 +320,6 @@ export class PandasView extends DOMWidgetView {
     }
 
     update_table(): void {
-        console.log('---------- update_table ----------');
-
         const view = $(this.el).children('.pd-view');
 
         // set column classes
@@ -352,8 +344,6 @@ export class PandasView extends DOMWidgetView {
     }
 
     update_view(): void {
-        console.log('---------- update_view ----------');
-
         const view = $(this.el).children('.pd-view');
 
         // set scroll position
@@ -371,8 +361,6 @@ export class PandasView extends DOMWidgetView {
             state_rows: JSON.parse(this.model.get('state_rows')),
             state_cols: JSON.parse(this.model.get('state_cols')),
         };
-
-        console.log('---------- send_message ----------', model);
 
         // send model to backend
         this.send({

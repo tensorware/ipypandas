@@ -109,8 +109,6 @@ class PandasWidget(DOMWidget):
     def message(self, widget, content, buffers=None):
         model = content['model']
 
-        print('---------- message ----------', model)
-
         # copy original dataframe (and use inplace operations afterwards)
         self._df = self.df.copy()
 
@@ -161,14 +159,12 @@ class PandasWidget(DOMWidget):
         self._df = self._df.iloc[slice_args]
 
     def styles(self):
-        # TODO https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.io.formats.style.Styler.format_index.html
-        # - custom styles support
-        # - check set_sticky
-        # - table title text
-        # - clickable hyperlinks
-        # - categorical icons
-        # - header histogram
-
+        """ TODO
+          - custom styles support
+          - check set_sticky
+          - table title text
+          - header histogram
+        """
         styler = Styler(self._df, cell_ids=False, table_attributes='class="pd-table"')
 
         # table styles
