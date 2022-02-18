@@ -88,7 +88,7 @@
     cursor: pointer;
 }
 
-.pd-ipypandas .pd-view .pd-table tbody th.pd-row-head.pd-state-selected {
+.pd-ipypandas .pd-view .pd-table tbody th.pd-row-head.pd-select-checked {
     background-color: blue;
 }
 

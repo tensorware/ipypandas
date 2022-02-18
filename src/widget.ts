@@ -61,8 +61,8 @@ export class PandasView extends DOMWidgetView {
         this.model.on('change:start_rows', this.update_data, this);
         this.model.on('change:end_rows', this.update_data, this);
 
-        this.model.on('change:col', this.update_table, this);
-        this.model.on('change:row', this.update_table, this);
+        this.model.on('change:state_cols', this.update_table, this);
+        this.model.on('change:state_rows', this.update_table, this);
 
         this.model.on('change:_scroll_top', this.update_view, this);
         this.model.on('change:_scroll_left', this.update_view, this);
@@ -100,148 +100,6 @@ export class PandasView extends DOMWidgetView {
         footer.append(shape);
 
         return footer;
-    }
-
-    get_class(target: JQuery<HTMLElement>, match: string): string {
-        // https://pandas.pydata.org/pandas-docs/stable/user_guide/style.html
-        const classes = (target.attr('class') || '').split(/\s+/);
-        const r = $.grep(classes, (x) => x.indexOf(match) === 0).join();
-        return r.split('-').pop() || '';
-    }
-
-    get_num(target: JQuery<HTMLElement>, match: string): number {
-        const c = this.get_class(target, match);
-        return parseInt(c || '-1', 10);
-    }
-
-    get_str(target: JQuery<HTMLElement>, match: string): string {
-        const c = this.get_class(target, match);
-        return c || '';
-    }
-
-    rotate_class(target: JQuery<HTMLElement>, classes: string[]): string {
-        for (let i = 0; i < classes.length; i++) {
-            if (target.hasClass(classes[i])) {
-                // remove old class
-                target.removeClass(classes[i]);
-
-                // add new class
-                i = i >= classes.length ? 0 : i + 1;
-                if (classes[i]) {
-                    target.addClass(classes[i]);
-                }
-
-                return classes[i];
-            }
-        }
-
-        // default class
-        target.addClass(classes[0]);
-        return classes[0];
-    }
-
-    round_to(number: number, multiple: number): number {
-        return multiple * Math.round(number / multiple);
-    }
-
-    on_resize(view: JQuery<HTMLElement>): boolean {
-        const body = view.find('.pd-table > tbody');
-        const row_height = body.find('tr:first').outerHeight() || 0;
-
-        // set model height
-        this.model.set('_view_height', view.height());
-
-        // set model rows
-        this.model.set('_view_rows', this.round_to(this.model.get('_view_height'), row_height) / row_height);
-
-        // set viewport range
-        this.set_range(view);
-
-        // set viewport height
-        this.set_height(view);
-
-        return true;
-    }
-
-    on_scroll(view: JQuery<HTMLElement>): boolean {
-        const body = view.find('.pd-table > tbody');
-        const row_height = body.find('tr:first').outerHeight() || 0;
-        const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
-
-        // set model scroll
-        this.model.set('_scroll_top', this.round_to(view.scrollTop() || 0, row_height));
-        this.model.set('_scroll_left', view.scrollLeft() || 0);
-
-        // set model position
-        const center_delta = Math.round(this.model.get('_view_rows') / 2);
-        const center_row = this.model.get('_scroll_top') / row_height + center_delta;
-        const update_range = Math.abs(center_row - this.model.get('_center_row')) >= center_delta;
-
-        if (update_range && lazy_load) {
-            this.model.set('_center_row', center_row);
-            this.set_range(view);
-            return true;
-        }
-
-        return false;
-    }
-
-    on_sort(th: JQuery<HTMLElement>): boolean {
-        this.rotate_class(th, ['pd-sort-desc', 'pd-sort-asc', '']);
-
-        console.log(th.css('--pd-df-iloc'));
-
-        const index = this.get_num(th, 'pd-col');
-        const level = this.get_num(th, 'pd-lvl');
-        const sort = this.get_str(th, 'pd-sort');
-
-        const col = JSON.parse(this.model.get('col'));
-        const id = th.attr('id') || '';
-
-        // update object
-        if (sort) {
-            col[id] = {
-                index: index,
-                level: level,
-                sort: sort,
-            };
-        } else {
-            delete col[id];
-        }
-
-        // set model col
-        this.model.set('col', JSON.stringify(col));
-
-        return true;
-    }
-
-    on_select(th: JQuery<HTMLElement>): boolean {
-        this.rotate_class(th, ['pd-state-selected', '']);
-
-        console.log(th.css('--pd-df-iloc'));
-
-        const index = this.get_num(th, 'pd-row');
-        const level = this.get_num(th, 'pd-lvl');
-        const state = this.get_str(th, 'pd-state');
-
-        const row = JSON.parse(this.model.get('row'));
-        const id = th.attr('id') || '';
-
-        // update object
-        if (state) {
-            row[id] = {
-                index: index,
-                level: level,
-                state: state,
-            };
-        } else {
-            delete row[id];
-        }
-
-        // set model row
-        this.model.set('row', JSON.stringify(row));
-
-        return true;
     }
 
     set_range(view: JQuery<HTMLElement>): void {
@@ -313,6 +171,98 @@ export class PandasView extends DOMWidgetView {
         }
     }
 
+    on_resize(view: JQuery<HTMLElement>): boolean {
+        const body = view.find('.pd-table > tbody');
+        const row_height = body.find('tr:first').outerHeight() || 0;
+
+        // set model height
+        this.model.set('_view_height', view.height());
+
+        // set model rows
+        this.model.set('_view_rows', this.round_to(this.model.get('_view_height'), row_height) / row_height);
+
+        // set viewport range
+        this.set_range(view);
+
+        // set viewport height
+        this.set_height(view);
+
+        return true;
+    }
+
+    on_scroll(view: JQuery<HTMLElement>): boolean {
+        const body = view.find('.pd-table > tbody');
+        const row_height = body.find('tr:first').outerHeight() || 0;
+        const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
+
+        // set model scroll
+        this.model.set('_scroll_top', this.round_to(view.scrollTop() || 0, row_height));
+        this.model.set('_scroll_left', view.scrollLeft() || 0);
+
+        // set model position
+        const center_delta = Math.round(this.model.get('_view_rows') / 2);
+        const center_row = this.model.get('_scroll_top') / row_height + center_delta;
+        const update_range = Math.abs(center_row - this.model.get('_center_row')) >= center_delta;
+
+        if (update_range && lazy_load) {
+            this.model.set('_center_row', center_row);
+            this.set_range(view);
+            return true;
+        }
+
+        return false;
+    }
+
+    on_sort(th: JQuery<HTMLElement>): boolean {
+        this.class_rotate(th, ['pd-sort-desc', 'pd-sort-asc', '']);
+
+        const idx = th.css('--pd-df-iloc');
+        const sort = this.class_suffix(th, 'pd-sort');
+        const state_cols = JSON.parse(this.model.get('state_cols'));
+
+        // create object
+        if (!(idx in state_cols)) {
+            state_cols[idx] = {};
+        }
+
+        // update object
+        if (sort) {
+            state_cols[idx]['sort'] = sort;
+        } else {
+            delete state_cols[idx];
+        }
+
+        // set model col
+        this.model.set('state_cols', JSON.stringify(state_cols));
+
+        return true;
+    }
+
+    on_select(th: JQuery<HTMLElement>): boolean {
+        this.class_rotate(th, ['pd-select-checked', '']);
+
+        const idx = th.css('--pd-df-iloc');
+        const select = this.class_suffix(th, 'pd-select');
+        const state_rows = JSON.parse(this.model.get('state_rows'));
+
+        // create object
+        if (!(idx in state_rows)) {
+            state_rows[idx] = {};
+        }
+
+        // update object
+        if (select) {
+            state_rows[idx]['select'] = select;
+        } else {
+            delete state_rows[idx];
+        }
+
+        // set model row
+        this.model.set('state_rows', JSON.stringify(state_rows));
+
+        return true;
+    }
+
     update_data(): void {
         console.log('---------- update_data ----------');
 
@@ -339,7 +289,7 @@ export class PandasView extends DOMWidgetView {
 
                 // vertical or horizontal scrolling
                 if (this.on_scroll(target)) {
-                    this.send_data();
+                    this.send_message();
                 }
             }).on('click', (e: JQuery.ClickEvent) => {
                 const target = $(e.target);
@@ -348,21 +298,21 @@ export class PandasView extends DOMWidgetView {
                 // resize handler clicked
                 if (classes.includes('pd-view')) {
                     if (this.on_resize(target)) {
-                        this.send_data();
+                        this.send_message();
                     }
                 }
 
                 // column header clicked
                 if (classes.includes('pd-col-head')) {
                     if (this.on_sort(target)) {
-                        this.send_data();
+                        this.send_message();
                     }
                 }
 
                 // row index clicked
                 if (classes.includes('pd-row-head')) {
                     if (this.on_select(target)) {
-                        this.send_data();
+                        this.send_message();
                     }
                 }
             });
@@ -381,19 +331,25 @@ export class PandasView extends DOMWidgetView {
     update_table(): void {
         console.log('---------- update_table ----------');
 
+        const view = $(this.el).children('.pd-view');
+
         // set column classes
-        Object.entries(JSON.parse(this.model.get('col'))).forEach(([key, value]: [string, any]) => {
-            const column = $(`#${key}`);
-            if (value.sort) {
-                column.addClass(`pd-sort-${value.sort}`);
+        Object.entries(JSON.parse(this.model.get('state_cols'))).forEach(([idx, value]: [string, any]) => {
+            const col = $.grep(view.find('.pd-col-head'), (th: HTMLElement) => {
+                return $(th).css('--pd-df-iloc') === idx;
+            });
+            if (col.length && value.sort) {
+                $(col[0]).addClass(`pd-sort-${value.sort}`);
             }
         });
 
         // set row classes
-        Object.entries(JSON.parse(this.model.get('row'))).forEach(([key, value]: [string, any]) => {
-            const row = $(`#${key}`);
-            if (value.state) {
-                row.addClass(`pd-state-${value.state}`);
+        Object.entries(JSON.parse(this.model.get('state_rows'))).forEach(([idx, value]: [string, any]) => {
+            const row = $.grep(view.find('.pd-row-head'), (th: HTMLElement) => {
+                return $(th).css('--pd-df-iloc') === idx;
+            });
+            if (row.length && value.select) {
+                $(row[0]).addClass(`pd-select-${value.select}`);
             }
         });
     }
@@ -411,19 +367,50 @@ export class PandasView extends DOMWidgetView {
         view.height(this.model.get('_view_height'));
     }
 
-    send_data(): void {
+    send_message(): void {
         const model = {
             start_rows: this.model.get('start_rows'),
             end_rows: this.model.get('end_rows'),
-            row: JSON.parse(this.model.get('row')),
-            col: JSON.parse(this.model.get('col')),
+            state_rows: JSON.parse(this.model.get('state_rows')),
+            state_cols: JSON.parse(this.model.get('state_cols')),
         };
 
-        console.log('---------- send ----------', model);
+        console.log('---------- send_message ----------', model);
 
         // send model to backend
         this.send({
             model: model,
         });
+    }
+
+    class_rotate(target: JQuery<HTMLElement>, classes: string[]): string {
+        for (let i = 0; i < classes.length; i++) {
+            if (target.hasClass(classes[i])) {
+                // remove old class
+                target.removeClass(classes[i]);
+
+                // add new class
+                i = i >= classes.length ? 0 : i + 1;
+                if (classes[i]) {
+                    target.addClass(classes[i]);
+                }
+
+                return classes[i];
+            }
+        }
+
+        // default class
+        target.addClass(classes[0]);
+        return classes[0];
+    }
+
+    class_suffix(target: JQuery<HTMLElement>, match: string): string {
+        const classes = (target.attr('class') || '').split(/\s+/);
+        const r = $.grep(classes, (x) => x.indexOf(match) === 0).join();
+        return r.split('-').pop() || '';
+    }
+
+    round_to(number: number, multiple: number): number {
+        return multiple * Math.round(number / multiple);
     }
 }

@@ -6,15 +6,12 @@
 
 import pandas as pd
 
-from uuid import uuid4
-from collections import defaultdict
-
-from IPython.display import display
-from IPython.core.getipython import get_ipython
-
 from ipywidgets import DOMWidget
+from collections import defaultdict
 from pandas.io.formats.style import Styler
 from traitlets import Instance, Unicode, Integer
+from IPython.core.getipython import get_ipython
+from IPython.display import display
 
 from ._version import module_name, module_version
 
@@ -51,12 +48,11 @@ class PandasWidget(DOMWidget):
     start_rows = Integer(0).tag(sync=True)
     end_rows = Integer(0).tag(sync=True)
 
-    # row and column actions
-    row = Unicode('{}').tag(sync=True)
-    col = Unicode('{}').tag(sync=True)
+    # states
+    state_rows = Unicode('{}').tag(sync=True)
+    state_cols = Unicode('{}').tag(sync=True)
 
     def __init__(self, **kwargs):
-        self.uuid = uuid4().hex[:5]
 
         # register client events
         self.on_msg(self.message)
@@ -106,9 +102,9 @@ class PandasWidget(DOMWidget):
         self._df = self.df.iloc[self.start_rows: self.end_rows].copy()
 
     def message(self, widget, content, buffers=None):
-        print('---------- message ----------')
-
         model = content['model']
+
+        print('---------- message ----------', model)
 
         # copy original dataframe (and use inplace operations afterwards)
         self._df = self.df.copy()
@@ -129,7 +125,7 @@ class PandasWidget(DOMWidget):
         filter_args = defaultdict(list)
 
         # TODO filter logic
-        for col in model['col'].values():
+        for idx, col in model['state_cols'].items():
             pass
 
         # filter dataframe
@@ -139,14 +135,13 @@ class PandasWidget(DOMWidget):
     def sort(self, model):
         sort_args = defaultdict(list)
 
-        for col in model['col'].values():
-            idx = col['index']
+        for idx, col in model['state_cols'].items():
             sort = col['sort']
             if not sort:
                 continue
 
             # sorting arguments
-            sort_args['by'].append(self._df.iloc[:, idx].name)
+            sort_args['by'].append(self._df.iloc[:, int(idx)].name)
             sort_args['ascending'].append(sort == 'asc')
 
         # sort dataframe
@@ -161,7 +156,15 @@ class PandasWidget(DOMWidget):
         self._df = self._df.iloc[slice_args]
 
     def styles(self):
-        styler = Styler(self._df, uuid=self.uuid, cell_ids=True, table_attributes='class="pd-table"')
+        # TODO https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.io.formats.style.Styler.format_index.html
+        # - custom styles support
+        # - check set_sticky
+        # - table title text
+        # - clickable hyperlinks
+        # - categorical icons
+        # - header histogram
+
+        styler = Styler(self._df, cell_ids=False, table_attributes='class="pd-table"')
 
         # table styles
         styler.set_table_styles(css_class_names={
@@ -172,7 +175,7 @@ class PandasWidget(DOMWidget):
             'col_heading': 'pd-col-head',
             'row_trim': 'pd-row-trim',
             'col_trim': 'pd-col-trim',
-            'index_name': 'pd-idx',
+            'index_name': 'pd-index',
             'data': 'pd-data',
             'blank': 'pd-blank'
         })
