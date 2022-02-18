@@ -43,6 +43,7 @@ class PandasWidget(DOMWidget):
     min_rows = Integer(0).tag(sync=True)
     max_rows = Integer(0).tag(sync=True)
     max_colwidth = Integer(0).tag(sync=True)
+    win_sizefactor = Integer(0).tag(sync=True)
 
     # viewport
     start_rows = Integer(0).tag(sync=True)
@@ -83,9 +84,13 @@ class PandasWidget(DOMWidget):
         if 'max_rows' not in kwargs:
             self.max_rows = pd.get_option('display.max_rows') or 0
 
-        # init max colwidth
+        # init max column width
         if 'max_colwidth' not in kwargs:
             self.max_colwidth = pd.get_option('display.max_colwidth') or 0
+
+        # init window size factor
+        if 'win_sizefactor' not in kwargs:
+            self.win_sizefactor = 4
 
         # init start rows
         if 'start_rows' not in kwargs:
@@ -94,7 +99,7 @@ class PandasWidget(DOMWidget):
         # init end rows
         if 'end_rows' not in kwargs:
             if self.max_rows and self.n_rows > self.max_rows:
-                self.end_rows = min(self.n_rows, self.min_rows // 2 + self.min_rows)
+                self.end_rows = min(self.n_rows, self.min_rows // 2 + self.win_sizefactor * self.min_rows)
             else:
                 self.end_rows = self.n_rows
 

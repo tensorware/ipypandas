@@ -7,12 +7,8 @@ import '../css/widget.css';
 
 /*
 TODO
-  - increase viewport range
-  - fix row selector swapping
-  - fix viewport resizing
   - fix lazy loading flickering
   - fix mouse scroll focus
-  - move helper methods
 */
 
 export class PandasModel extends DOMWidgetModel {
@@ -109,15 +105,16 @@ export class PandasView extends DOMWidgetView {
 
         // init default values
         if (!this.model.get('_center_row')) {
-            this.model.set('_center_row', Math.round(this.model.get('min_rows') / 2));
+            this.model.set('_center_row', 0.5 * this.model.get('win_sizefactor') * this.model.get('min_rows'));
         }
         if (!this.model.get('_view_rows')) {
             this.model.set('_view_rows', this.model.get('min_rows'));
         }
 
         // calculate row ranges
-        let start_rows = Math.max(0, this.model.get('_center_row') - this.model.get('_view_rows'));
-        let end_rows = Math.min(this.model.get('n_rows'), this.model.get('_center_row') + this.model.get('_view_rows'));
+        const range = this.model.get('win_sizefactor') * this.model.get('_view_rows');
+        let start_rows = Math.max(0, this.model.get('_center_row') - range);
+        let end_rows = Math.min(this.model.get('n_rows'), this.model.get('_center_row') + range);
         if (!lazy_load) {
             start_rows = 0;
             end_rows = this.model.get('n_rows');
@@ -200,7 +197,7 @@ export class PandasView extends DOMWidgetView {
         this.model.set('_scroll_left', view.scrollLeft() || 0);
 
         // set model position
-        const center_delta = Math.round(this.model.get('_view_rows') / 2);
+        const center_delta = 0.5 * this.model.get('win_sizefactor') * this.model.get('_view_rows');
         const center_row = this.model.get('_scroll_top') / row_height + center_delta;
         const update_range = Math.abs(center_row - this.model.get('_center_row')) >= center_delta;
 
@@ -339,7 +336,7 @@ export class PandasView extends DOMWidgetView {
                 return $(th).css('--pd-df-iloc') === idx;
             });
             if (col.length && value.sort) {
-                $(col[0]).addClass(`pd-sort-${value.sort}`);
+                $(col.pop() || []).addClass(`pd-sort-${value.sort}`);
             }
         });
 
@@ -349,7 +346,7 @@ export class PandasView extends DOMWidgetView {
                 return $(th).css('--pd-df-iloc') === idx;
             });
             if (row.length && value.select) {
-                $(row[0]).addClass(`pd-select-${value.select}`);
+                $(row.pop() || []).addClass(`pd-select-${value.select}`);
             }
         });
     }
