@@ -31,9 +31,11 @@ class PandasWidget(DOMWidget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
-    # dataframe and view html
+    # dataframe
     _df = Instance(pd.DataFrame)
     df = Instance(pd.DataFrame)
+
+    # view
     view = Unicode('<div/>').tag(sync=True)
 
     # dimensions
@@ -62,7 +64,7 @@ class PandasWidget(DOMWidget):
         # init defaults
         self.defaults(**kwargs)
 
-        # init representation
+        # init view
         self.update()
 
         # init widget
@@ -71,11 +73,11 @@ class PandasWidget(DOMWidget):
     def defaults(self, **kwargs):
 
         # init original dataframe
-        df = kwargs['df'] if 'df' in kwargs else pd.DataFrame()
+        self.df = kwargs['df'] if 'df' in kwargs else pd.DataFrame()
 
         # init dimensions
-        self.n_rows = df.shape[0]
-        self.n_cols = df.shape[1]
+        self.n_rows = self.df.shape[0]
+        self.n_cols = self.df.shape[1]
 
         # init min rows
         if 'min_rows' not in kwargs:
@@ -101,7 +103,7 @@ class PandasWidget(DOMWidget):
                 self.end_rows = self.n_rows
 
         # init internal dataframe
-        self._df = df.iloc[self.start_rows: self.end_rows].copy()
+        self._df = self.df.iloc[self.start_rows: self.end_rows].copy()
 
     def message(self, widget, content, buffers=None):
         print('---------- message ----------')
@@ -158,11 +160,11 @@ class PandasWidget(DOMWidget):
         # slice dataframe
         self._df = self._df.iloc[slice_args]
 
-    def update(self):
+    def styles(self):
+        styler = Styler(self._df, uuid=self.uuid, cell_ids=True, table_attributes='class="pd-table"')
 
-        # update view html
-        view = Styler(self._df, uuid=self.uuid, cell_ids=True, table_attributes='class="pd-table"')
-        self.view = view.set_table_styles(css_class_names={
+        # table styles
+        styler.set_table_styles(css_class_names={
             'level': 'pd-lvl-',
             'row': 'pd-row-',
             'col': 'pd-col-',
@@ -173,7 +175,28 @@ class PandasWidget(DOMWidget):
             'index_name': 'pd-idx',
             'data': 'pd-data',
             'blank': 'pd-blank'
-        }).to_html()
+        })
+
+        # column styles
+        column_styles = {}
+        for col in self._df.columns:
+            iloc = self.df.columns.get_loc(col)
+            column_styles[col] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
+        styler.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
+
+        # row styles
+        row_styles = {}
+        for row in self._df.index:
+            iloc = self.df.index.get_loc(row)
+            row_styles[row] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
+        styler.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
+
+        return styler
+
+    def update(self):
+
+        # update view html
+        self.view = self.styles().to_html()
 
     def __repr__(self):
         return self._df.__repr__()

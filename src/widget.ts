@@ -189,6 +189,8 @@ export class PandasView extends DOMWidgetView {
     on_sort(th: JQuery<HTMLElement>): boolean {
         this.rotate_class(th, ['pd-sort-desc', 'pd-sort-asc', '']);
 
+        console.log(th.css('--pd-df-iloc'));
+
         const index = this.get_num(th, 'pd-col');
         const level = this.get_num(th, 'pd-lvl');
         const sort = this.get_str(th, 'pd-sort');
@@ -215,6 +217,8 @@ export class PandasView extends DOMWidgetView {
 
     on_select(th: JQuery<HTMLElement>): boolean {
         this.rotate_class(th, ['pd-state-selected', '']);
+
+        console.log(th.css('--pd-df-iloc'));
 
         const index = this.get_num(th, 'pd-row');
         const level = this.get_num(th, 'pd-lvl');
