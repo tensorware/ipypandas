@@ -54,6 +54,10 @@
     box-shadow: 0 var(--pd-border-width) var(--pd-border-color);
 }
 
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head {
+    white-space: nowrap;
+}
+
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head:hover {
     cursor: pointer;
 }
