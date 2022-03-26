@@ -60,23 +60,30 @@
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head::before {
     content: '';
-    margin-right: 3px;
+    padding: 2px;
+    margin-right: 4px;
     display: inline-block;
-    border: 4px solid transparent;
+    border: 0 solid var(--pd-font-color);
+    transform: rotate(45deg);
 }
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head:hover::before {
     cursor: pointer;
+    transform: rotate(45deg);
+    border-width: 0 2px 2px 0;
+    margin-bottom: 2px;
 }
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head.pd-sort-desc::before {
-    border-top: 8px solid var(--pd-font-color);
-    border-bottom-width: 0;
+    transform: rotate(45deg);
+    border-width: 0 2px 2px 0;
+    margin-bottom: 2px;
 }
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head.pd-sort-asc::before {
-    border-bottom: 8px solid var(--pd-font-color);
-    border-top-width: 0;
+    transform: rotate(-135deg);
+    border-width: 0 2px 2px 0;
+    margin-bottom: 0px;
 }
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head::after {
