@@ -32,6 +32,9 @@ class PandasWidget(DOMWidget):
     _df = Instance(pd.DataFrame)
     df = Instance(pd.DataFrame)
 
+    # styler
+    styler = Instance(Styler)
+
     # view
     view = Unicode('<div/>').tag(sync=True)
 
@@ -69,8 +72,16 @@ class PandasWidget(DOMWidget):
 
     def defaults(self, **kwargs):
 
-        # init original dataframe
-        self.df = kwargs['df'] if 'df' in kwargs else pd.DataFrame()
+        # init from dataframe or styler
+        if 'df' in kwargs:
+            self.df = kwargs['df']
+            self.styler = Styler(self.df)
+        elif 'styler' in kwargs:
+            self.df = kwargs['styler'].data
+            self.styler = kwargs['styler']
+        else:
+            self.df = pd.DataFrame()
+            self.styler = Styler(self.df)
 
         # init dimensions
         self.n_rows = self.df.shape[0]
@@ -160,15 +171,18 @@ class PandasWidget(DOMWidget):
 
     def styles(self):
         """ TODO
-          - custom styles support
-          - check set_sticky
-          - table title text
+          - tooltips can only render with 'cell_ids' is True
+          - check set_sticky interactions
           - header histogram
         """
-        styler = Styler(self._df, cell_ids=False, table_attributes='class="pd-table"')
+
+        # use internal dataframe
+        self.styler.data = self._df
+        self.styler.cell_ids = False
+        self.styler.table_attributes = 'class="pd-table"'
 
         # table styles
-        styler.set_table_styles(css_class_names={
+        self.styler.set_table_styles(css_class_names={
             'level': 'pd-lvl-',
             'row': 'pd-row-',
             'col': 'pd-col-',
@@ -186,16 +200,16 @@ class PandasWidget(DOMWidget):
         for col in self._df.columns:
             iloc = self.df.columns.get_loc(col)
             column_styles[col] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
-        styler.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
+        self.styler.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
 
         # row styles
         row_styles = {}
         for row in self._df.index:
             iloc = self.df.index.get_loc(row)
             row_styles[row] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
-        styler.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
+        self.styler.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
 
-        return styler
+        return self.styler
 
     def update(self):
 
@@ -218,8 +232,10 @@ def formatter():
 def enable(**kwargs):
     ipy_fmt = formatter()
     ipy_fmt.for_type(pd.DataFrame, lambda df: display(PandasWidget(df=df, **kwargs)))
+    ipy_fmt.for_type(Styler, lambda styler: display(PandasWidget(styler=styler, **kwargs)))
 
 
 def disable():
     ipy_fmt = formatter()
     ipy_fmt.type_printers.pop(pd.DataFrame, None)
+    ipy_fmt.type_printers.pop(Styler, None)
