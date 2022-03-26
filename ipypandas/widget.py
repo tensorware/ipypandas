@@ -178,10 +178,12 @@ class PandasWidget(DOMWidget):
 
         # use internal dataframe
         self.styler.data = self._df
+
+        # disable cell ids
         self.styler.cell_ids = False
-        self.styler.table_attributes = 'class="pd-table"'
 
         # table styles
+        self.styler.table_attributes = 'class="pd-table"'
         self.styler.set_table_styles(css_class_names={
             'level': 'pd-lvl-',
             'row': 'pd-row-',
@@ -202,12 +204,20 @@ class PandasWidget(DOMWidget):
             column_styles[col] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
         self.styler.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
 
+        col_text = '<span class="pd-col-text" draggable="true">{0}</span>'
+        col_sort_icon = '<span class="pd-col-i-sort"></span>'
+        col_filter_icon = '<span class="pd-col-i-filter"></span>'
+        self.styler.format_index(lambda x: f'{col_sort_icon}{col_text}{col_filter_icon}'.format(x), axis=1)
+
         # row styles
         row_styles = {}
         for row in self._df.index:
             iloc = self.df.index.get_loc(row)
             row_styles[row] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
         self.styler.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
+
+        row_text = '<span class="pd-row-text">{0}</span>'
+        self.styler.format_index(lambda x: f'{row_text}'.format(x), axis=0)
 
         return self.styler
 

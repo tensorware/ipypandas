@@ -90,6 +90,27 @@ export class PandasView extends DOMWidgetView {
         return footer;
     }
 
+    get_filter(th: JQuery<HTMLElement>): JQuery<HTMLElement> {
+        const filter = $('<div/>').addClass('pd-filter');
+
+        // calculate position
+        const view = th.closest('.pd-view');
+        const tr = th.closest('tr');
+
+        const top = (tr.offset()?.top || 0) - (view.offset()?.top || 0);
+        const height = tr.outerHeight(true) || 0;
+
+        const left = (th.offset()?.left || 0) - (view.offset()?.left || 0);
+        const width = th.outerWidth(true) || 0;
+
+        filter.offset({ top: top + height + 2, left: left + width - 2 });
+
+        // TODO: filter dialog
+        filter.append(th.text());
+
+        return filter;
+    }
+
     set_range(view: JQuery<HTMLElement>): void {
         const body = view.find('.pd-table > tbody');
         const row_height = body.find('tr:first').outerHeight() || 0;
@@ -278,33 +299,53 @@ export class PandasView extends DOMWidgetView {
             view.on('scroll', (e: JQuery.ScrollEvent) => {
                 const target = $(e.target);
 
+                // remove open filter
+                root.find('.pd-filter').remove();
+                root.find('.pd-col-head').removeClass('pd-filter-active');
+
                 // vertical or horizontal scrolling
                 if (this.on_scroll(target)) {
                     this.send_message();
                 }
-            }).on('click', (e: JQuery.ClickEvent) => {
+            });
+            view.on('click', (e: JQuery.ClickEvent) => {
                 const target = $(e.target);
-                const classes = (target.attr('class') || '').split(/\s+/);
 
-                // resize handler clicked
-                if (classes.includes('pd-view')) {
-                    if (this.on_resize(target)) {
-                        this.send_message();
-                    }
-                }
+                // remove open filter
+                const filter = root.find('.pd-filter').remove();
+                root.find('.pd-col-head').removeClass('pd-filter-active');
 
                 // column header clicked
-                if (classes.includes('pd-col-head')) {
-                    if (this.on_sort(target)) {
-                        this.send_message();
+                const col_head = target.closest('.pd-col-head');
+                if (col_head.length) {
+                    if (target.is('.pd-col-i-filter')) {
+                        if (!filter.length) {
+                            root.append(this.get_filter(col_head));
+                            col_head.addClass('pd-filter-active');
+                        }
+                    } else {
+                        if (this.on_sort(col_head)) {
+                            this.send_message();
+                        }
                     }
+                    return;
                 }
 
                 // row index clicked
-                if (classes.includes('pd-row-head')) {
-                    if (this.on_select(target)) {
+                const row_head = target.closest('.pd-row-head');
+                if (row_head.length) {
+                    if (this.on_select(row_head)) {
                         this.send_message();
                     }
+                    return;
+                }
+
+                // resize handler clicked
+                if (target.is('.pd-view')) {
+                    if (this.on_resize(target)) {
+                        this.send_message();
+                    }
+                    return;
                 }
             });
 
