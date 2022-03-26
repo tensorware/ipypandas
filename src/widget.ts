@@ -38,25 +38,19 @@ export class PandasModel extends DOMWidgetModel {
 
 export class PandasView extends DOMWidgetView {
     render(): void {
-        this.el.classList.add(...['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas']);
+        const classes = ['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas'];
+        if (window.matchMedia('(pointer: coarse)').matches) {
+            classes.push('pd-touch');
+        }
+        this.el.classList.add(...classes);
 
-        // init
+        // init view
         this.update_data();
 
         // register change events
         this.model.on('change:view', this.update_data, this);
-
-        this.model.on('change:start_rows', this.update_data, this);
-        this.model.on('change:end_rows', this.update_data, this);
-
-        this.model.on('change:state_cols', this.update_table, this);
-        this.model.on('change:state_rows', this.update_table, this);
-
-        this.model.on('change:_scroll_top', this.update_view, this);
-        this.model.on('change:_scroll_left', this.update_view, this);
-        this.model.on('change:_center_row', this.update_view, this);
-        this.model.on('change:_view_height', this.update_view, this);
-        this.model.on('change:_view_rows', this.update_view, this);
+        this.model.on('change:n_rows', this.reset_data, this);
+        this.model.on('change:n_cols', this.reset_data, this);
     }
 
     get_view(): JQuery<HTMLElement> {
@@ -87,6 +81,13 @@ export class PandasView extends DOMWidgetView {
         shape.text(`${n_rows} rows × ${n_cols} columns`);
         footer.append(shape);
 
+        // search
+        const search = $('<div/>').addClass('pd-search');
+        const input = $('<input/>').attr({ type: 'search', placeholder: 'Search...' });
+        input.val(this.model.get('search_query'));
+        search.append(input);
+        footer.append(search);
+
         return footer;
     }
 
@@ -113,6 +114,8 @@ export class PandasView extends DOMWidgetView {
 
     set_range(view: JQuery<HTMLElement>): void {
         const body = view.find('.pd-table > tbody');
+
+        // get dimensions
         const row_height = body.find('tr:first').outerHeight() || 0;
         const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
 
@@ -150,6 +153,8 @@ export class PandasView extends DOMWidgetView {
     set_height(view: JQuery<HTMLElement>): void {
         const head = view.find('.pd-table > thead');
         const body = view.find('.pd-table > tbody');
+
+        // get dimensions
         const header_height = head.outerHeight() || 0;
         const row_height = body.find('tr:first').outerHeight() || 0;
         const lazy_load = this.model.get('max_rows') && this.model.get('n_rows') > this.model.get('max_rows');
@@ -184,6 +189,11 @@ export class PandasView extends DOMWidgetView {
     on_resize(view: JQuery<HTMLElement>): boolean {
         const body = view.find('.pd-table > tbody');
         const row_height = body.find('tr:first').outerHeight() || 0;
+
+        // unchanged height
+        if (this.model.get('_view_height') === view.height()) {
+            return false;
+        }
 
         // set model height
         this.model.set('_view_height', view.height());
@@ -273,6 +283,35 @@ export class PandasView extends DOMWidgetView {
         return true;
     }
 
+    on_search(input: JQuery<HTMLElement>): boolean {
+        const query = String(input.val()).trim();
+
+        // set model query
+        this.model.set('search_query', query);
+
+        return true;
+    }
+
+    reset_data(): void {
+        const view = $(this.el).children('.pd-view');
+
+        // reset view state
+        this.model.set('_scroll_top', 0);
+        this.model.set('_scroll_left', 0);
+        this.model.set('_center_row', 0);
+        this.model.set('_view_height', 0);
+        this.model.set('_view_rows', 0);
+
+        // set viewport range
+        this.set_range(view);
+
+        // set viewport height
+        this.set_height(view);
+
+        // send message
+        this.send_message('reset');
+    }
+
     update_data(): void {
         /* TODO
          - fix lazy loading flickering
@@ -294,8 +333,8 @@ export class PandasView extends DOMWidgetView {
         // update viewport
         this.update_view();
 
+        // handle view events
         $.when(view).then(() => {
-            // handle events
             view.on('scroll', (e: JQuery.ScrollEvent) => {
                 const target = $(e.target);
 
@@ -305,7 +344,7 @@ export class PandasView extends DOMWidgetView {
 
                 // vertical or horizontal scrolling
                 if (this.on_scroll(target)) {
-                    this.send_message();
+                    this.send_message('scroll');
                 }
             });
             view.on('click', (e: JQuery.ClickEvent) => {
@@ -325,7 +364,7 @@ export class PandasView extends DOMWidgetView {
                         }
                     } else {
                         if (this.on_sort(col_head)) {
-                            this.send_message();
+                            this.send_message('sort');
                         }
                     }
                     return;
@@ -335,7 +374,7 @@ export class PandasView extends DOMWidgetView {
                 const row_head = target.closest('.pd-row-head');
                 if (row_head.length) {
                     if (this.on_select(row_head)) {
-                        this.send_message();
+                        this.send_message('select');
                     }
                     return;
                 }
@@ -343,7 +382,7 @@ export class PandasView extends DOMWidgetView {
                 // resize handler clicked
                 if (target.is('.pd-view')) {
                     if (this.on_resize(target)) {
-                        this.send_message();
+                        this.send_message('resize');
                     }
                     return;
                 }
@@ -357,6 +396,26 @@ export class PandasView extends DOMWidgetView {
 
             // update viewport
             this.update_view();
+        });
+
+        // handle footer events
+        $.when(footer).then(() => {
+            footer.on('keydown', (e: JQuery.KeyDownEvent) => {
+                const target = $(e.target);
+
+                // handle only enter key
+                if (e.key !== 'Enter') {
+                    return true;
+                }
+
+                // search box query
+                const search = target.closest('.pd-search');
+                if (search.length) {
+                    if (this.on_search(target)) {
+                        this.send_message('search');
+                    }
+                }
+            });
         });
     }
 
@@ -395,17 +454,13 @@ export class PandasView extends DOMWidgetView {
         view.height(this.model.get('_view_height'));
     }
 
-    send_message(): void {
-        const model = {
-            start_rows: this.model.get('start_rows'),
-            end_rows: this.model.get('end_rows'),
-            state_rows: JSON.parse(this.model.get('state_rows')),
-            state_cols: JSON.parse(this.model.get('state_cols')),
-        };
+    send_message(event: string): void {
+        // sync model with backend
+        this.model.save_changes();
 
-        // send model to backend
+        // send message to backend
         this.send({
-            model: model,
+            event: event,
         });
     }
 

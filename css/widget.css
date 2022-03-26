@@ -2,7 +2,9 @@
     --pd-view-min-height: 0px;
     --pd-view-max-height: 0px;
 
+    --pd-font-family: var(--jp-content-font-family);
     --pd-font-color: var(--jp-ui-font-color1);
+
     --pd-header-color: var(--jp-layout-color0);
     --pd-border-color: var(--jp-border-color1);
     --pd-border-width: 1px;
@@ -58,7 +60,8 @@
     white-space: nowrap;
 }
 
-.pd-ipypandas .pd-view .pd-table thead th.pd-col-head:hover {
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head:hover,
+.pd-ipypandas.pd-touch .pd-view .pd-table thead th.pd-col-head {
     cursor: pointer;
 }
 
@@ -102,7 +105,8 @@
     width: 6px;
 }
 
-.pd-ipypandas .pd-view .pd-table thead th.pd-col-head:hover .pd-col-i-filter::before {
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head:hover .pd-col-i-filter::before,
+.pd-ipypandas.pd-touch .pd-view .pd-table thead th.pd-col-head .pd-col-i-filter::before {
     color: var(--pd-font-color);
 }
 
@@ -134,7 +138,8 @@
     white-space: nowrap;
 }
 
-.pd-ipypandas .pd-view .pd-table tbody th.pd-row-head:hover {
+.pd-ipypandas .pd-view .pd-table tbody th.pd-row-head:hover,
+.pd-ipypandas.pd-touch .pd-view .pd-table tbody th.pd-row-head {
     cursor: pointer;
 }
 
@@ -149,6 +154,28 @@
 .pd-ipypandas .pd-footer {
     padding-top: var(--pd-footer-padding-top);
     padding-bottom: var(--pd-footer-padding-bottom);
+}
+
+.pd-ipypandas .pd-footer .pd-shape {
+    float: left;
+}
+
+.pd-ipypandas .pd-footer .pd-search {
+    float: left;
+    margin-left: 10px;
+}
+
+.pd-ipypandas .pd-footer .pd-search input {
+    font-size: 12px;
+    font-family: var(--pd-font-family);
+    border: var(--pd-border-width) solid var(--pd-border-color);
+    color: var(--pd-font-color);
+    padding: 3px 3px 2px 3px;
+    background: transparent;
+}
+
+.pd-ipypandas .pd-footer .pd-search input:focus {
+    outline: 0;
 }
 
 .pd-ipypandas .pd-filter {

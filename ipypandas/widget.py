@@ -4,6 +4,9 @@
 # Copyright (c) Tensorware.
 # Distributed under the terms of the Modified BSD License.
 
+import json
+
+import numpy as np
 import pandas as pd
 
 from ipywidgets import DOMWidget
@@ -32,15 +35,9 @@ class PandasWidget(DOMWidget):
     _df = Instance(pd.DataFrame)
     df = Instance(pd.DataFrame)
 
-    # styler
+    # layout
     styler = Instance(Styler)
-
-    # view
     view = Unicode('<div/>').tag(sync=True)
-
-    # dimensions
-    n_rows = Integer(0).tag(sync=True)
-    n_cols = Integer(0).tag(sync=True)
 
     # ranges
     min_rows = Integer(0).tag(sync=True)
@@ -49,12 +46,15 @@ class PandasWidget(DOMWidget):
     win_sizefactor = Integer(0).tag(sync=True)
 
     # viewport
+    n_rows = Integer(0).tag(sync=True)
+    n_cols = Integer(0).tag(sync=True)
     start_rows = Integer(0).tag(sync=True)
     end_rows = Integer(0).tag(sync=True)
 
     # states
     state_rows = Unicode('{}').tag(sync=True)
     state_cols = Unicode('{}').tag(sync=True)
+    search_query = Unicode('').tag(sync=True)
 
     def __init__(self, **kwargs):
 
@@ -83,10 +83,6 @@ class PandasWidget(DOMWidget):
             self.df = pd.DataFrame()
             self.styler = Styler(self.df)
 
-        # init dimensions
-        self.n_rows = self.df.shape[0]
-        self.n_cols = self.df.shape[1]
-
         # init min rows
         if 'min_rows' not in kwargs:
             self.min_rows = pd.get_option('display.min_rows') or 10
@@ -103,58 +99,73 @@ class PandasWidget(DOMWidget):
         if 'win_sizefactor' not in kwargs:
             self.win_sizefactor = 10
 
+        # init dimensions
+        self.n_rows = self.df.shape[0]
+        self.n_cols = self.df.shape[1]
+
         # init start rows
-        if 'start_rows' not in kwargs:
-            self.start_rows = 0
+        self.start_rows = 0
 
         # init end rows
-        if 'end_rows' not in kwargs:
-            if self.max_rows and self.n_rows > self.max_rows:
-                self.end_rows = min(self.n_rows, self.min_rows // 2 + self.win_sizefactor * self.min_rows)
-            else:
-                self.end_rows = self.n_rows
+        if self.max_rows and self.n_rows > self.max_rows:
+            self.end_rows = min(self.n_rows, self.min_rows // 2 + self.win_sizefactor * self.min_rows)
+        else:
+            self.end_rows = self.n_rows
 
         # init internal dataframe
         self._df = self.df.iloc[self.start_rows: self.end_rows].copy()
 
     def message(self, widget, content, buffers=None):
-        model = content['model']
 
-        # copy original dataframe (and use inplace operations afterwards)
+        # copy original dataframe
         self._df = self.df.copy()
 
-        # filter dataframe
-        self.filter(model)
-
-        # sort dataframe
-        self.sort(model)
-
-        # slice dataframe
-        self.slice(model)
+        # update dataframe
+        self.search()
+        self.filter()
+        self.sort()
+        self.slice()
 
         # update representation
         self.update()
 
-    def filter(self, model):
+    def search(self):
+        search_args = self.search_query.replace(',', ' ').split()
+        if not any(search_args):
+            return
+
+        # search only in string columns
+        cols = self._df.select_dtypes('object')
+        if not any(cols):
+            self._df = self._df.head(0)
+            return
+
+        # search dataframe
+        query_args = dict(na=False, case=False, regex=True)
+        for query in search_args:
+            results = [self._df[col].str.contains(query, **query_args) for col in cols]
+            mask = np.column_stack(results)
+            self._df = self._df.loc[mask.any(axis=1)]
+
+    def filter(self):
         filter_args = defaultdict(list)
 
-        # TODO filter logic
-        for idx, col in model['state_cols'].items():
+        # TODO: generate filter arguments
+        for idx, col in json.loads(self.state_cols).items():
             pass
 
         # filter dataframe
         if filter_args:
             pass
 
-    def sort(self, model):
+    def sort(self):
         sort_args = defaultdict(list)
 
-        for idx, col in model['state_cols'].items():
+        # generate sort arguments
+        for idx, col in json.loads(self.state_cols).items():
             sort = col['sort']
             if not sort:
                 continue
-
-            # sorting arguments
             sort_args['by'].append(self._df.iloc[:, int(idx)].name)
             sort_args['ascending'].append(sort == 'asc')
 
@@ -163,8 +174,12 @@ class PandasWidget(DOMWidget):
             sort_args['inplace'] = True
             self._df.sort_values(**sort_args)
 
-    def slice(self, model):
-        slice_args = slice(model['start_rows'], model['end_rows'])
+    def slice(self):
+        slice_args = slice(self.start_rows, self.end_rows)
+
+        # TODO: proper frontend reset
+        self.n_rows = self._df.shape[0]
+        self.n_cols = self._df.shape[1]
 
         # slice dataframe
         self._df = self._df.iloc[slice_args]
@@ -173,7 +188,6 @@ class PandasWidget(DOMWidget):
         """ TODO
           - tooltips can only render with 'cell_ids' is True
           - check set_sticky interactions
-          - header histogram
         """
 
         # use internal dataframe
