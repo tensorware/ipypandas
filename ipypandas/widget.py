@@ -5,35 +5,43 @@
 # Distributed under the terms of the Modified BSD License.
 
 import json
+import datetime
 
 import numpy as np
 import pandas as pd
 
-from ipywidgets import DOMWidget
 from collections import defaultdict
 from pandas.io.formats.style import Styler
-from traitlets import Instance, Unicode, Integer
+
+from ipywidgets import DOMWidget, register
+from traitlets import All, Instance, Unicode, Integer, observe
+
 from IPython.core.getipython import get_ipython
 from IPython.display import display
 
 from ._version import module_name, module_version
 
 
+@register
 class PandasWidget(DOMWidget):
 
-    # module version
+    # module version of pandas widget
     _model_name = Unicode('PandasModel').tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
     _model_module_version = Unicode(module_version).tag(sync=True)
 
-    # view version
+    # view version of pandas widget
     _view_name = Unicode('PandasView').tag(sync=True)
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
+    # sync flags between client and server
+    upsync = Unicode('').tag(sync=True)
+    downsync = Unicode('').tag(sync=True)
+
     # dataframe
-    _df = Instance(pd.DataFrame)
     df = Instance(pd.DataFrame)
+    df_copy = Instance(pd.DataFrame)
 
     # layout
     styler = Instance(Styler)
@@ -57,20 +65,6 @@ class PandasWidget(DOMWidget):
     search_query = Unicode('').tag(sync=True)
 
     def __init__(self, **kwargs):
-
-        # register client events
-        self.on_msg(self.message)
-
-        # init defaults
-        self.defaults(**kwargs)
-
-        # init view
-        self.update()
-
-        # init widget
-        super(PandasWidget, self).__init__(**kwargs)
-
-    def defaults(self, **kwargs):
 
         # init from dataframe or styler
         if 'df' in kwargs:
@@ -113,39 +107,53 @@ class PandasWidget(DOMWidget):
             self.end_rows = self.n_rows
 
         # init internal dataframe
-        self._df = self.df.iloc[self.start_rows: self.end_rows].copy()
+        self.df_copy = self.df.copy()
 
-    def message(self, widget, content, buffers=None):
+        # init view via simulated client update
+        self.downsync = f'init-{datetime.datetime.now().timestamp() * 1000:.0f}'
+
+        # init pandas widget
+        super(PandasWidget, self).__init__(**kwargs)
+
+    @observe('downsync')
+    def update(self, change):
 
         # copy original dataframe
-        self._df = self.df.copy()
+        self.df_copy = self.df.copy()
 
         # update dataframe
         self.search()
         self.filter()
         self.sort()
-        self.slice()
 
-        # update representation
-        self.update()
+        # reset viewport on dimensions change
+        viewport_changed = self.n_rows != self.df_copy.shape[0] or self.n_cols != self.df_copy.shape[1]
+        if viewport_changed:
+            self.n_rows = self.df_copy.shape[0]
+            self.n_cols = self.df_copy.shape[1]
+            self.upsync = f'reset-{datetime.datetime.now().timestamp() * 1000:.0f}'
+            return
+
+        # update view representation
+        self.view = self.styles().to_html()
 
     def search(self):
         search_args = self.search_query.replace(',', ' ').split()
         if not any(search_args):
             return
 
-        # search only in string columns
-        cols = self._df.select_dtypes('object')
+        # consider only string columns
+        cols = self.df_copy.select_dtypes('object')
         if not any(cols):
-            self._df = self._df.head(0)
+            self.df_copy = self.df_copy.head(0)
             return
 
         # search dataframe
         query_args = dict(na=False, case=False, regex=True)
         for query in search_args:
-            results = [self._df[col].str.contains(query, **query_args) for col in cols]
+            results = [self.df_copy[col].str.contains(query, **query_args) for col in cols]
             mask = np.column_stack(results)
-            self._df = self._df.loc[mask.any(axis=1)]
+            self.df_copy = self.df_copy.loc[mask.any(axis=1)]
 
     def filter(self):
         filter_args = defaultdict(list)
@@ -166,23 +174,13 @@ class PandasWidget(DOMWidget):
             sort = col['sort']
             if not sort:
                 continue
-            sort_args['by'].append(self._df.iloc[:, int(idx)].name)
+            sort_args['by'].append(self.df_copy.iloc[:, int(idx)].name)
             sort_args['ascending'].append(sort == 'asc')
 
         # sort dataframe
         if sort_args:
             sort_args['inplace'] = True
-            self._df.sort_values(**sort_args)
-
-    def slice(self):
-        slice_args = slice(self.start_rows, self.end_rows)
-
-        # TODO: proper frontend reset
-        self.n_rows = self._df.shape[0]
-        self.n_cols = self._df.shape[1]
-
-        # slice dataframe
-        self._df = self._df.iloc[slice_args]
+            self.df_copy.sort_values(**sort_args)
 
     def styles(self):
         """ TODO
@@ -190,8 +188,8 @@ class PandasWidget(DOMWidget):
           - check set_sticky interactions
         """
 
-        # use internal dataframe
-        self.styler.data = self._df
+        # use sliced dataframe
+        self.styler.data = self.df_copy.iloc[self.start_rows:self.end_rows]
 
         # disable cell ids
         self.styler.cell_ids = False
@@ -213,7 +211,7 @@ class PandasWidget(DOMWidget):
 
         # column styles
         column_styles = {}
-        for col in self._df.columns:
+        for col in self.styler.data.columns:
             iloc = self.df.columns.get_loc(col)
             column_styles[col] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
         self.styler.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
@@ -225,7 +223,7 @@ class PandasWidget(DOMWidget):
 
         # row styles
         row_styles = {}
-        for row in self._df.index:
+        for row in self.styler.data.index:
             iloc = self.df.index.get_loc(row)
             row_styles[row] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
         self.styler.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
@@ -235,13 +233,9 @@ class PandasWidget(DOMWidget):
 
         return self.styler
 
-    def update(self):
-
-        # update view html
-        self.view = self.styles().to_html()
-
     def __repr__(self):
-        return self._df.__repr__()
+        rows, cols = self.df_copy.shape
+        return f'{type(self)}: {rows} rows × {cols} columns'
 
 
 def formatter():

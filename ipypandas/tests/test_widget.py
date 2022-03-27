@@ -6,6 +6,8 @@
 
 import pandas as pd
 
+from pandas.io.formats.style import Styler
+
 from ..widget import PandasWidget
 
 
@@ -15,4 +17,8 @@ def test_widget():
     w = PandasWidget()
 
     # empty panda dataframe should be used
-    assert isinstance(w._df, pd.DataFrame)
+    assert isinstance(w.df, pd.DataFrame)
+    assert isinstance(w.df_copy, pd.DataFrame)
+
+    # default styler should be used
+    assert isinstance(w.styler, Styler)
