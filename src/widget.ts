@@ -77,14 +77,19 @@ export class PandasView extends DOMWidgetView {
         // shape
         const n_rows = this.model.get('n_rows');
         const n_cols = this.model.get('n_cols');
-        const shape = $('<p/>').addClass('pd-shape');
-        shape.text(`${n_rows} rows × ${n_cols} columns`);
+        const shape = $('<div/>').addClass('pd-shape');
+        const text = $('<p/>').text(`${n_rows} rows × ${n_cols} columns`);
+        shape.append(text);
         footer.append(shape);
 
         // search
+        const query = this.model.get('search_query');
         const search = $('<div/>').addClass('pd-search');
         const input = $('<input/>').attr({ type: 'search', placeholder: 'Search...' });
-        input.val(this.model.get('search_query'));
+        if (query) {
+            search.addClass('pd-search-active');
+        }
+        input.val(query);
         search.append(input);
         footer.append(search);
 
@@ -107,7 +112,12 @@ export class PandasView extends DOMWidgetView {
         filter.offset({ top: top + height + 2, left: left + width - 2 });
 
         // TODO: filter dialog
-        filter.append(th.text());
+        filter.append('More to come...');
+
+        // animate fade-in
+        $.when(filter).then(() => {
+            filter.css({ '--pd-filter-opacity': '1' });
+        });
 
         return filter;
     }
@@ -259,7 +269,7 @@ export class PandasView extends DOMWidgetView {
     }
 
     on_select(th: JQuery<HTMLElement>): boolean {
-        this.class_rotate(th, ['pd-select-checked', '']);
+        this.class_rotate(th, ['pd-select-active', '']);
 
         const idx = th.css('--pd-df-iloc');
         const select = this.class_suffix(th, 'pd-select');
@@ -284,7 +294,15 @@ export class PandasView extends DOMWidgetView {
     }
 
     on_search(input: JQuery<HTMLElement>): boolean {
-        const query = String(input.val()).trim();
+        const search = input.closest('.pd-search');
+        const query = `${input.val()}`.trim();
+
+        // set input style
+        if (query) {
+            search.addClass('pd-search-active');
+        } else {
+            search.removeClass('pd-search-active');
+        }
 
         // set model query
         this.model.set('search_query', query);
@@ -317,7 +335,15 @@ export class PandasView extends DOMWidgetView {
          - fix lazy loading flickering
          - fix mouse scroll focus
         */
-        const root = $(this.el).empty();
+        const root = $(this.el);
+
+        // hide root
+        root.css({
+            '--pd-root-opacity': '0',
+            '--pd-root-cursor': 'progress',
+            '--pd-root-min-height': (root.height() || 0) + 'px',
+        });
+        root.empty();
 
         // append view
         const view = this.get_view();
@@ -332,6 +358,9 @@ export class PandasView extends DOMWidgetView {
 
         // update viewport
         this.update_view();
+
+        // update footer
+        this.update_footer();
 
         // handle view events
         $.when(view).then(() => {
@@ -388,30 +417,39 @@ export class PandasView extends DOMWidgetView {
                 }
             });
 
+            // show root
+            root.css({
+                '--pd-root-opacity': '1',
+                '--pd-root-cursor': 'auto',
+                '--pd-root-min-height': 'initial',
+            });
+
             // set viewport range
             this.set_range(view);
 
             // set viewport height
             this.set_height(view);
 
+            // update table
+            this.update_table();
+
             // update viewport
             this.update_view();
+
+            // update footer
+            this.update_footer();
         });
 
         // handle footer events
         $.when(footer).then(() => {
-            footer.on('keydown', (e: JQuery.KeyDownEvent) => {
+            footer.on('keyup', (e: JQuery.KeyUpEvent) => {
                 const target = $(e.target);
-
-                // handle only enter key
-                if (e.key !== 'Enter') {
-                    return true;
-                }
+                const enter = e.key === 'Enter';
 
                 // search box query
                 const search = target.closest('.pd-search');
                 if (search.length) {
-                    if (this.on_search(target)) {
+                    if (this.on_search(target) && enter) {
                         this.send_message('search');
                     }
                 }
@@ -421,10 +459,12 @@ export class PandasView extends DOMWidgetView {
 
     update_table(): void {
         const view = $(this.el).children('.pd-view');
+        const col_heads = view.find('.pd-col-head');
+        const row_heads = view.find('.pd-row-head');
 
         // set column classes
         Object.entries(JSON.parse(this.model.get('state_cols'))).forEach(([idx, value]: [string, any]) => {
-            const col = $.grep(view.find('.pd-col-head'), (th: HTMLElement) => {
+            const col = $.grep(col_heads, (th: HTMLElement) => {
                 return $(th).css('--pd-df-iloc') === idx;
             });
             if (col.length && value.sort) {
@@ -434,7 +474,7 @@ export class PandasView extends DOMWidgetView {
 
         // set row classes
         Object.entries(JSON.parse(this.model.get('state_rows'))).forEach(([idx, value]: [string, any]) => {
-            const row = $.grep(view.find('.pd-row-head'), (th: HTMLElement) => {
+            const row = $.grep(row_heads, (th: HTMLElement) => {
                 return $(th).css('--pd-df-iloc') === idx;
             });
             if (row.length && value.select) {
@@ -451,7 +491,16 @@ export class PandasView extends DOMWidgetView {
         view.scrollLeft(this.model.get('_scroll_left'));
 
         // set height
-        view.height(this.model.get('_view_height'));
+        view.css({ '--pd-view-height': this.model.get('_view_height') + 'px' });
+    }
+
+    update_footer(): void {
+        const footer = $(this.el).children('.pd-footer');
+        const view = $(this.el).children('.pd-view');
+        const table = view.children('.pd-table');
+
+        // set maximum width
+        footer.css({ '--pd-footer-max-width': (table.width() || 0) + 'px' });
     }
 
     send_message(event: string): void {
