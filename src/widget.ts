@@ -134,11 +134,11 @@ export class PandasView extends DOMWidgetView {
         const win_scale = this.model.get('win_sizefactor');
 
         // calculate view dimensions
-        const view_rows = Math.max(min_rows, this.round_to(view_height, row_height) / row_height);
+        const view_rows = Math.max(min_rows, this.round_to(view_height, row_height) / row_height || 0);
         const view_range = Math.round(win_scale * view_rows);
 
         // calculate row positions
-        const center = this.round_to(Math.min(n_rows - 0.5 * view_range, scroll_top / row_height + 0.5 * view_range), row_height);
+        const center = this.round_to(Math.min(n_rows - 0.5 * view_range, scroll_top / row_height + 0.5 * view_range || 0), row_height);
         const start = !load_lazy ? 0 : Math.max(0, center - view_range);
         const end = !load_lazy ? n_rows : Math.min(n_rows, center + view_range);
 
@@ -171,8 +171,8 @@ export class PandasView extends DOMWidgetView {
         });
 
         // set model range
-        this.model.set('start_rows', start_row);
-        this.model.set('end_rows', end_row);
+        this.model.set('start_row', start_row);
+        this.model.set('end_row', end_row);
     }
 
     set_height(view: JQuery<HTMLElement>): void {
@@ -535,7 +535,7 @@ export class PandasView extends DOMWidgetView {
     }
 
     round_to(number: number, multiple: number): number {
-        return multiple * Math.round(number / multiple);
+        return multiple * Math.round(number / multiple) || 0;
     }
 
     downsync(event: string): void {

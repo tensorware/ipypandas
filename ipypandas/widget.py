@@ -56,8 +56,8 @@ class PandasWidget(DOMWidget):
     # viewport
     n_rows = Integer(0).tag(sync=True)
     n_cols = Integer(0).tag(sync=True)
-    start_rows = Integer(0).tag(sync=True)
-    end_rows = Integer(0).tag(sync=True)
+    start_row = Integer(0).tag(sync=True)
+    end_row = Integer(0).tag(sync=True)
 
     # states
     state_rows = Unicode('{}').tag(sync=True)
@@ -97,14 +97,14 @@ class PandasWidget(DOMWidget):
         self.n_rows = self.df.shape[0]
         self.n_cols = self.df.shape[1]
 
-        # init start rows
-        self.start_rows = 0
+        # init start row
+        self.start_row = 0
 
-        # init end rows
+        # init end row
         if self.max_rows and self.n_rows > self.max_rows:
-            self.end_rows = min(self.n_rows, self.min_rows // 2 + self.win_sizefactor * self.min_rows)
+            self.end_row = min(self.n_rows, self.min_rows // 2 + self.win_sizefactor * self.min_rows)
         else:
-            self.end_rows = self.n_rows
+            self.end_row = self.n_rows
 
         # init internal dataframe
         self.df_copy = self.df.copy()
@@ -189,7 +189,7 @@ class PandasWidget(DOMWidget):
         """
 
         # use sliced dataframe
-        self.styler.data = self.df_copy.iloc[self.start_rows:self.end_rows]
+        self.styler.data = self.df_copy.iloc[self.start_row:self.end_row]
 
         # disable cell ids
         self.styler.cell_ids = False
