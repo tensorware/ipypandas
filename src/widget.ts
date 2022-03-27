@@ -81,15 +81,17 @@ export class PandasView extends DOMWidgetView {
         footer.append(shape);
 
         // search
-        const query = this.model.get('search_query');
-        const search = $('<div/>').addClass('pd-search');
-        const input = $('<input/>').attr({ type: 'search', placeholder: 'Search...' });
-        if (query) {
-            search.addClass('pd-search-active');
+        if (n_cols) {
+            const query = this.model.get('search_query');
+            const search = $('<div/>').addClass('pd-search');
+            const input = $('<input/>').attr({ type: 'search', placeholder: 'Search...' });
+            if (query) {
+                search.addClass('pd-search-active');
+            }
+            input.val(query);
+            search.append(input);
+            footer.append(search);
         }
-        input.val(query);
-        search.append(input);
-        footer.append(search);
 
         return footer;
     }
@@ -189,9 +191,11 @@ export class PandasView extends DOMWidgetView {
         // calculate height ranges
         let max_height = view.find('.pd-table').outerHeight() || 0;
         let min_height = Math.min(max_height, header_height + min_rows * row_height);
+        const resize = min_height === max_height ? 'none' : 'vertical';
 
         // set viewport height
         view.css({
+            '--pd-view-resize': resize,
             '--pd-view-min-height': min_height + 'px',
             '--pd-view-max-height': max_height + 'px',
         });
@@ -207,7 +211,7 @@ export class PandasView extends DOMWidgetView {
 
         // set model height
         if (!this.model.get('_view_height')) {
-            this.model.set('_view_height', !load_lazy ? max_height : min_height);
+            this.model.set('_view_height', load_lazy ? min_height : max_height);
         } else {
             this.model.set('_view_height', view.height());
         }
@@ -535,7 +539,10 @@ export class PandasView extends DOMWidgetView {
     }
 
     round_to(number: number, multiple: number): number {
-        return multiple * Math.round(number / multiple) || 0;
+        if (!multiple) {
+            return number;
+        }
+        return multiple * Math.round(number / multiple);
     }
 
     downsync(event: string): void {

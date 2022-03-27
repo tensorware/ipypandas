@@ -3,6 +3,7 @@
     --pd-root-cursor: auto;
     --pd-root-min-height: 0px;
 
+    --pd-view-resize: none;
     --pd-view-height: 0px;
     --pd-view-min-height: 0px;
     --pd-view-max-height: 0px;
@@ -38,7 +39,7 @@
 .pd-ipypandas .pd-view {
     height: 0;
     overflow: auto;
-    resize: vertical;
+    resize: var(--pd-view-resize);
     height: var(--pd-view-height);
     min-height: var(--pd-view-min-height);
     max-height: var(--pd-view-max-height);
