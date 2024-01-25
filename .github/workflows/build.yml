@@ -18,7 +18,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+        with:
+          node_version: 20.0
 
       - name: Install Dependencies
         run: |
