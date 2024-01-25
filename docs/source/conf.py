@@ -7,7 +7,6 @@
 import os
 import sys
 
-from sphinx.util import logging
 from os.path import dirname, join as pjoin
 
 # add sphinx extension module names
@@ -17,9 +16,9 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
-    'nbsphinx',
+    'jupyter_sphinx',
     'nbsphinx_link',
-    'jupyter_sphinx'
+    'nbsphinx'
 ]
 docs = dirname(dirname(__file__))
 root = dirname(docs)
@@ -29,15 +28,14 @@ sys.path.insert(0, pjoin(docs, 'sphinxext'))
 # general information about the project
 project = 'ipypandas'
 author = 'Tensorware'
-copyright = '2022, Tensorware'
+copyright = '2024, Tensorware'
 
 # get version from python package
-_version_py = os.path.join(root, 'ipypandas', '_version.py')
-version_ns = {}
-with open(_version_py) as f:
+version_ns = dict()
+with open(os.path.join(root, 'ipypandas', '_version.py')) as f:
     exec(f.read(), version_ns)
+version = '%i.%i' % version_ns['version_info'][:2]
 release = version_ns['__version__']
-version = release[:3]
 
 # add any paths that contain templates relative to this directory
 templates_path = ['_templates']
@@ -78,11 +76,12 @@ man_pages = [
         master_doc,
         'ipypandas',
         'ipypandas Documentation',
-        [author], 1
+        [author],
+        1
     )
 ]
 
-# grouping the latex document tree (source start file, target name, title, author, documentclass [howto, manual, or own class])
+# grouping the latex document tree (source start file, target name, title, author, document class)
 latex_documents = [
     (
         master_doc,
@@ -101,7 +100,7 @@ texinfo_documents = [
         'ipypandas Documentation',
         author,
         'ipypandas',
-        'Interactive Jupyter Notebook and JupyterLab features for the python data analysis library pandas',
+        'Interactive JupyterLab features for the python data analysis library pandas.',
         'Miscellaneous'
     )
 ]

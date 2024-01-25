@@ -16,12 +16,7 @@ Next, install it with a develop install using pip::
 If you are planning on working on the JS/frontend code, you should also do
 a link installation of the extension::
 
-    jupyter nbextension install [--sys-prefix / --user / --system] --symlink --py ipypandas
-    jupyter nbextension enable [--sys-prefix / --user / --system] --py ipypandas
-
-with the `appropriate flag`_. Or, if you are using Jupyterlab::
-
-    jupyter labextension install .
+    jupyter labextension develop --overwrite .
 
 
 .. links

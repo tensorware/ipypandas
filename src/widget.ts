@@ -3,6 +3,7 @@
 
 import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
 import { MODULE_NAME, MODULE_VERSION } from './version';
+import $ from 'jquery';
 import '../css/widget.css';
 
 export class PandasModel extends DOMWidgetModel {
@@ -30,7 +31,6 @@ export class PandasModel extends DOMWidgetModel {
             _scroll_top: 0,
             _scroll_left: 0,
             _view_height: 0,
-            _center_row: 0,
         };
     }
 }
@@ -122,32 +122,29 @@ export class PandasView extends DOMWidgetView {
         return filter;
     }
 
-    get_range(view: JQuery<HTMLElement>): any {
+    get_range(view: JQuery<HTMLElement>, scale: number): any {
         const body = view.find('.pd-table > tbody');
-        const row_height = body.find('tr:first').outerHeight() || 0;
+        const row_height = body.find('tr:first').outerHeight() || 10;
 
         const n_rows = this.model.get('n_rows');
-        const min_rows = this.model.get('min_rows');
         const max_rows = this.model.get('max_rows');
         const load_lazy = max_rows && n_rows > max_rows;
 
-        const view_height = this.model.get('_view_height');
-        const scroll_top = this.model.get('_scroll_top');
-        const win_scale = this.model.get('win_sizefactor');
+        // screen height is used as maximum viewport size
+        const window_rows = this.round_to(window.screen.height, row_height) / row_height;
+        const margin_rows = Math.round(window_rows * scale);
 
-        // calculate view dimensions
-        const view_rows = Math.max(min_rows, this.round_to(view_height, row_height) / row_height || 0);
-        const view_range = Math.round(win_scale * view_rows);
+        // scroll row position is used as center position
+        const scroll_top = this.model.get('_scroll_top') || 0;
+        const scroll_row = this.clamp(this.round_to(scroll_top, row_height) / row_height, 0, n_rows);
 
-        // calculate row positions
-        const center = this.round_to(Math.min(n_rows - 0.5 * view_range, scroll_top / row_height + 0.5 * view_range || 0), row_height);
-        const start = !load_lazy ? 0 : Math.max(0, center - view_range);
-        const end = !load_lazy ? n_rows : Math.min(n_rows, center + view_range);
+        // calculate start and end row
+        const start_row = !load_lazy ? 0 : this.clamp(scroll_row - margin_rows, 0, n_rows);
+        const end_row = !load_lazy ? n_rows : this.clamp(scroll_row + margin_rows, 0, n_rows);
 
         return {
-            start_row: start,
-            center_row: center,
-            end_row: end,
+            start_row: start_row,
+            end_row: end_row,
         };
     }
 
@@ -156,12 +153,7 @@ export class PandasView extends DOMWidgetView {
         const row_height = body.find('tr:first').outerHeight() || 0;
 
         // get viewport range
-        const { start_row, center_row, end_row } = this.get_range(view);
-
-        // set default center
-        if (!this.model.get('_center_row')) {
-            this.model.set('_center_row', center_row);
-        }
+        const { start_row, end_row } = this.get_range(view, 2);
 
         // set viewport padding
         const padding_top = start_row * row_height;
@@ -222,8 +214,8 @@ export class PandasView extends DOMWidgetView {
             return false;
         }
 
-        // set model height
-        this.model.set('_view_height', view.height());
+        // set viewport height
+        this.set_height(view);
 
         return this.on_scroll(view);
     }
@@ -238,13 +230,13 @@ export class PandasView extends DOMWidgetView {
         this.model.set('_scroll_left', view.scrollLeft() || 0);
 
         // calculate center position
-        const { start_row, center_row, end_row } = this.get_range(view);
-        const center_delta = Math.max(center_row - start_row, end_row - center_row) / 2;
+        const { start_row, end_row } = this.get_range(view, 1);
+        const prev_start_row = this.model.get('start_row');
+        const prev_end_row = this.model.get('end_row');
 
         // update center and set range
-        const update_range = Math.abs(center_row - this.model.get('_center_row')) >= center_delta;
+        const update_range = start_row < prev_start_row || prev_end_row < end_row;
         if (update_range && load_lazy) {
-            this.model.set('_center_row', center_row);
             this.set_range(view);
             return true;
         }
@@ -326,7 +318,6 @@ export class PandasView extends DOMWidgetView {
         this.model.set('_scroll_top', 0);
         this.model.set('_scroll_left', 0);
         this.model.set('_view_height', 0);
-        this.model.set('_center_row', 0);
 
         // set viewport range
         this.set_range(view);
@@ -339,9 +330,9 @@ export class PandasView extends DOMWidgetView {
     }
 
     update_data(): void {
-        /* TODO
-         - fix lazy loading flickering
-         - fix mouse scroll focus
+        /* TODO:
+        - fix lazy loading flickering
+        - fix focus loss on scrolling
         */
         const root = $(this.el);
 
@@ -538,11 +529,12 @@ export class PandasView extends DOMWidgetView {
         return r.split('-').pop() || '';
     }
 
-    round_to(number: number, multiple: number): number {
-        if (!multiple) {
-            return number;
-        }
-        return multiple * Math.round(number / multiple);
+    round_to(value: number, multiple: number): number {
+        return multiple * Math.round(value / multiple);
+    }
+
+    clamp(value: number, min: number, max: number): number {
+        return Math.min(Math.max(value, min), max);
     }
 
     downsync(event: string): void {

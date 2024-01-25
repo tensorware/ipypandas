@@ -26,7 +26,6 @@ graft tests
 prune tests/build
 
 # Javascript files
-graft ipypandas/nbextension
 graft src
 graft css
 prune **/node_modules

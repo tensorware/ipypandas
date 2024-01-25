@@ -30,6 +30,12 @@ var/
 pip-log.txt
 pip-delete-this-directory.txt
 
+# Node
+.yarn
+.pnp.*
+**/node_modules/
+ipypandas/labextension
+
 # Tests
 htmlcov/
 .tox/
@@ -45,10 +51,9 @@ coverage.xml
 
 # Documentation
 docs/_build/
-docs/source/_static/embed-bundle.js
-docs/source/_static/embed-bundle.js.map
+docs/source/_static/embed-bundle.*
 
-# OSX
+# Mac
 ._*
 .DS_Store
 .AppleDouble
@@ -75,9 +80,3 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
-
-# NPM
-**/node_modules/
-ipypandas/nbextension/index.*
-ipypandas/labextension/*.tgz
-ipypandas/labextension

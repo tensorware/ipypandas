@@ -51,7 +51,6 @@ class PandasWidget(DOMWidget):
     min_rows = Integer(0).tag(sync=True)
     max_rows = Integer(0).tag(sync=True)
     max_colwidth = Integer(0).tag(sync=True)
-    win_sizefactor = Integer(0).tag(sync=True)
 
     # viewport
     n_rows = Integer(0).tag(sync=True)
@@ -89,27 +88,21 @@ class PandasWidget(DOMWidget):
         if 'max_colwidth' not in kwargs:
             self.max_colwidth = pd.get_option('display.max_colwidth') or 0
 
-        # init window size factor
-        if 'win_sizefactor' not in kwargs:
-            self.win_sizefactor = 10
-
         # init dimensions
         self.n_rows = self.df.shape[0]
         self.n_cols = self.df.shape[1]
 
-        # init start row
+        # init viewport
         self.start_row = 0
-
-        # init end row
         if self.max_rows and self.n_rows > self.max_rows:
-            self.end_row = min(self.n_rows, self.min_rows // 2 + self.win_sizefactor * self.min_rows)
+            self.end_row = min(self.n_rows, 1000)
         else:
             self.end_row = self.n_rows
 
         # init internal dataframe
         self.df_copy = self.df.copy()
 
-        # init view via simulated client update
+        # init view by simulated client update
         self.downsync = f'init-{datetime.datetime.now().timestamp() * 1000:.0f}'
 
         # init pandas widget
@@ -183,9 +176,9 @@ class PandasWidget(DOMWidget):
             self.df_copy.sort_values(**sort_args)
 
     def styles(self):
-        """ TODO
-          - tooltips can only render with 'cell_ids' is True
-          - check set_sticky interactions
+        """ TODO:
+        - tooltips can only render when 'cell_ids' is true
+        - check set_sticky as alternative or interactions
         """
 
         # use sliced dataframe
@@ -235,7 +228,7 @@ class PandasWidget(DOMWidget):
 
     def __repr__(self):
         rows, cols = self.df_copy.shape
-        return f'{type(self)}: {rows} rows × {cols} columns'
+        return f'{type(self)}, {rows} rows × {cols} columns'
 
 
 def formatter():

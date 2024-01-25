@@ -2,9 +2,10 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { PandasView } from '..';
+import { createTestView } from './utils';
 
 describe('PandasView', () => {
     it('should not be createable', () => {
-        expect(() => { new PandasView() }).toThrow(TypeError);
+        expect(() => { createTestView(PandasView) }).toThrow(TypeError);
     });
 });

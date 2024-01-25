@@ -2,7 +2,7 @@
 Introduction
 =====================================
 
-Interactive Jupyter Notebook and JupyterLab features for the python data analysis library pandas.
+Interactive JupyterLab features for the python data analysis library pandas.
 
 .. todo::
 

@@ -1,8 +1,8 @@
 // Copyright (c) Tensorware.
 // Distributed under the terms of the Modified BSD License.
 
-import { Widget } from '@phosphor/widgets';
-import { Application, IPlugin } from '@phosphor/application';
+import { Widget } from '@lumino/widgets';
+import { Application, IPlugin } from '@lumino/application';
 import { IJupyterWidgetRegistry } from '@jupyter-widgets/base';
 import { MODULE_NAME, MODULE_VERSION } from './version';
 import * as widgetExports from './widget';

@@ -2,38 +2,13 @@ const path = require('path');
 const version = require('./package.json').version;
 
 const mode = 'production'
-const rules = [
-    { test: /\.ts$/, loader: 'ts-loader' },
-    { test: /\.js$/, loader: 'source-map-loader' },
-    { test: /\.css$/, use: ['style-loader', 'css-loader'] }
-];
 const externals = ['@jupyter-widgets/base'];
-const resolve = {
-    extensions: ['.webpack.js', '.web.js', '.ts', '.js']
-};
+const resolve = { extensions: ['.webpack.js', '.web.js', '.ts', '.js'] };
+const rules = [{ test: /\.ts$/, loader: 'ts-loader' }, { test: /\.js$/, loader: 'source-map-loader' }, { test: /\.css$/, use: ['style-loader', 'css-loader'] }];
 
 module.exports = [
     /**
-     * JavaScript bundle that is run on load of the notebook.
-     */
-    {
-        entry: './src/extension.ts',
-        mode: mode,
-        output: {
-            filename: 'index.js',
-            path: path.resolve(__dirname, 'ipypandas', 'nbextension'),
-            libraryTarget: 'amd',
-            publicPath: '',
-        },
-        module: {
-            rules: rules
-        },
-        devtool: 'source-map',
-        externals,
-        resolve,
-    },
-    /**
-     * Similar to the notebook bundle but with path for static assets.
+     * JavaScript that is run on load of the notebook.
      */
     {
         entry: './src/index.ts',

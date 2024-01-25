@@ -6,7 +6,6 @@ import { createTestModel } from './utils';
 
 describe('PandasModel', () => {
     it('should be createable', () => {
-        const model = createTestModel(PandasModel);
-        expect(model).toBeInstanceOf(PandasModel);
+        expect(createTestModel(PandasModel)).toBeInstanceOf(PandasModel);
     });
 });

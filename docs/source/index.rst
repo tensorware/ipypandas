@@ -4,7 +4,7 @@ ipypandas
 
 Version: |release|
 
-Interactive Jupyter Notebook and JupyterLab features for the python data analysis library pandas.
+Interactive JupyterLab features for the python data analysis library pandas.
 
 
 Quickstart
@@ -36,7 +36,7 @@ Contents
    :maxdepth: 2
    :caption: Development
 
-   develop-install
+   dev-install
 
 
 .. links

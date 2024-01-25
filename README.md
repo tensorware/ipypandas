@@ -1,73 +1,83 @@
-# ipypandas
 
+# ipypandas
 [![Build Status](https://travis-ci.org/tensorware/ipypandas.svg?branch=master)](https://travis-ci.org/tensorware/ipypandas)
 [![codecov](https://codecov.io/gh/tensorware/ipypandas/branch/master/graph/badge.svg)](https://codecov.io/gh/tensorware/ipypandas)
 
-Interactive Jupyter Notebook and JupyterLab features for the python data analysis library pandas.
+Interactive JupyterLab features for the python data analysis library pandas.
 
 ## Installation
-
 You can install using `pip`:
 ```bash
 pip install ipypandas
 ```
 
-Only if you are using Jupyter Notebook 5.2 or earlier, you may also need to enable the nbextension:
-```bash
-jupyter nbextension enable --py [--sys-prefix|--user|--system] ipypandas
-```
-
-### Usage
-Importing `ipypandas` enables all the interactive features:
-```python
-import ipypandas
-import pandas as pd
-```
-
 ## Development Installation
-
 Create a dev environment:
 ```bash
-conda create -n ipypandas-dev -c conda-forge nodejs yarn python jupyterlab
-conda activate ipypandas-dev
+mamba create -n ipypandas python=3.10 jupyterlab=4.0 yarn=4.0 nodejs=20.5
+mamba activate ipypandas
 ```
 
-Install the python. This will also build the TS package.
+Install npm packages.
 ```bash
-pip install -e ".[test, examples]"
+yarn install
 ```
 
-When developing your extensions, you need to manually enable your extensions with the notebook / lab frontend.  
-For lab, this is done by the command:
+Install the python module and build TS dependencies.
+```bash
+pip install -e ".[examples, tests, docs]"
+```
 
+When developing your extensions, you need to manually enable your extensions with the frontend. For JupyterLab, this is done by the command:
 ```bash
 jupyter labextension develop --overwrite .
-yarn run build
 ```
 
-For classic notebook, you need to run:
+### Commands
+
+#### Install
 ```bash
-jupyter nbextension install --sys-prefix --symlink --overwrite --py ipypandas
-jupyter nbextension enable --sys-prefix --py ipypandas
+yarn clean && yarn install && yarn build
+pip uninstall ipypandas && pip install -e ".[examples, tests, docs]"
 ```
 
-Note that the `--symlink` flag doesn't work on Windows, so you will here have to run the `install` command every time that you rebuild your extension.
-For certain installations you might also need another flag instead of `--sys-prefix`, but we won't cover the meaning of those flags here.
+#### Extension
+```bash
+jupyter lab clean
+jupyter labextension list
+jupyter labextension develop --overwrite .
+jupyter lab ./examples
+```
+
+#### Documentation
+```bash
+cd docs
+make html
+```
 
 ### Typescript
-
-If you use JupyterLab to develop then you can watch the source directory and run JupyterLab at the same time in different terminals to watch for changes in the extension's source and automatically rebuild the widget.
-
+If you use JupyterLab to develop then you can watch the source directory and run JupyterLab at the same time in different
+terminals to watch for changes in the extension's source and automatically rebuild the widget.
 ```bash
 # watch the source directory and automatically rebuilding when needed
-yarn run watch
+yarn clean && yarn install && yarn build && yarn watch
 
-# run JupyterLab in another terminal
-jupyter lab
+# run JupyterLab in another terminal (use ipypandas environment)
+jupyter lab ./examples --no-browser
 ```
 
 After a change wait for the build to finish and then refresh your browser and the changes should take effect.
 
 ### Python
-
 If you make a change to the python code then you will need to restart the notebook kernel to have it take effect.
+
+### Versioning
+To update the version, install tbump and use it to bump the version.
+By default it will also create a tag.
+```bash
+pip install tbump
+tbump <new-version>
+```
+
+## Credits
+Template from `https://github.com/jupyter-widgets/widget-ts-cookiecutter`.
