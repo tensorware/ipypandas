@@ -14,7 +14,7 @@ pip install ipypandas
 ## Development Installation
 Create a dev environment:
 ```bash
-mamba create -n ipypandas python=3.10 jupyterlab=4.0 yarn=4.0 nodejs=20.5
+mamba create -n ipypandas python=3.12 jupyterlab=4.0 yarn=4.0 nodejs=20.5
 mamba activate ipypandas
 ```
 
