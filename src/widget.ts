@@ -209,17 +209,6 @@ export class PandasView extends DOMWidgetView {
         }
     }
 
-    on_resize(view: JQuery<HTMLElement>): boolean {
-        if (this.model.get('_view_height') === view.height()) {
-            return false;
-        }
-
-        // set viewport height
-        this.set_height(view);
-
-        return this.on_scroll(view);
-    }
-
     on_scroll(view: JQuery<HTMLElement>): boolean {
         const n_rows = this.model.get('n_rows');
         const max_rows = this.model.get('max_rows');
@@ -244,6 +233,43 @@ export class PandasView extends DOMWidgetView {
         return false;
     }
 
+    on_resize(view: JQuery<HTMLElement>): boolean {
+        if (this.model.get('_view_height') === view.height()) {
+            return false;
+        }
+
+        // set viewport height
+        this.set_height(view);
+
+        return this.on_scroll(view);
+    }
+
+    on_rescale(th: JQuery<HTMLElement>): boolean {
+        const idx = th.css('--pd-df-iloc');
+        const width = th.find('.pd-col-i-rescale').width() || 0;
+        const state_cols = JSON.parse(this.model.get('state_cols'));
+
+        // create object
+        if (!('width' in state_cols)) {
+            state_cols['width'] = {};
+        }
+        if (!(idx in state_cols['width'])) {
+            state_cols['width'][idx] = {};
+        }
+
+        // update object
+        if (width) {
+            state_cols['width'][idx] = width;
+        } else {
+            delete state_cols['width'][idx];
+        }
+
+        // set model col
+        this.model.set('state_cols', JSON.stringify(state_cols));
+
+        return true;
+    }
+
     on_sort(th: JQuery<HTMLElement>): boolean {
         this.class_rotate(th, ['pd-sort-desc', 'pd-sort-asc', '']);
 
@@ -252,15 +278,18 @@ export class PandasView extends DOMWidgetView {
         const state_cols = JSON.parse(this.model.get('state_cols'));
 
         // create object
-        if (!(idx in state_cols)) {
-            state_cols[idx] = {};
+        if (!('sort' in state_cols)) {
+            state_cols['sort'] = {};
+        }
+        if (!(idx in state_cols['sort'])) {
+            state_cols['sort'][idx] = {};
         }
 
         // update object
         if (sort) {
-            state_cols[idx]['sort'] = sort;
+            state_cols['sort'][idx] = sort;
         } else {
-            delete state_cols[idx];
+            delete state_cols['sort'][idx];
         }
 
         // set model col
@@ -277,15 +306,18 @@ export class PandasView extends DOMWidgetView {
         const state_rows = JSON.parse(this.model.get('state_rows'));
 
         // create object
-        if (!(idx in state_rows)) {
-            state_rows[idx] = {};
+        if (!('select' in state_rows)) {
+            state_rows['select'] = {};
+        }
+        if (!(idx in state_rows['select'])) {
+            state_rows['select'][idx] = {};
         }
 
         // update object
         if (select) {
-            state_rows[idx]['select'] = select;
+            state_rows['select'][idx] = select;
         } else {
-            delete state_rows[idx];
+            delete state_rows['select'][idx];
         }
 
         // set model row
@@ -385,6 +417,7 @@ export class PandasView extends DOMWidgetView {
                 // column header clicked
                 const col_head = target.closest('.pd-col-head');
                 if (col_head.length) {
+                    this.on_rescale(col_head);
                     if (target.is('.pd-col-i-filter')) {
                         if (!filter.length) {
                             root.append(this.get_filter(col_head));
@@ -458,28 +491,43 @@ export class PandasView extends DOMWidgetView {
 
     update_table(): void {
         const view = $(this.el).children('.pd-view');
+
         const col_heads = view.find('.pd-col-head');
         const row_heads = view.find('.pd-row-head');
 
-        // set column classes
-        Object.entries(JSON.parse(this.model.get('state_cols'))).forEach(([idx, value]: [string, any]) => {
-            const col = $.grep(col_heads, (th: HTMLElement) => {
-                return $(th).css('--pd-df-iloc') === idx;
+        const state_cols = JSON.parse(this.model.get('state_cols'));
+        const state_rows = JSON.parse(this.model.get('state_rows'));
+
+        // set column width
+        if ('width' in state_cols) {
+            Object.entries(state_cols['width']).forEach(([idx, value]: [string, any]) => {
+                const col = $.grep(col_heads, (th: HTMLElement) => {
+                    return $(th).css('--pd-df-iloc') === idx;
+                }).pop();
+                const rescale = $(col || []).find('.pd-col-i-rescale');
+                rescale.css({ width: value + 'px' });
             });
-            if (col.length && value.sort) {
-                $(col.pop() || []).addClass(`pd-sort-${value.sort}`);
-            }
-        });
+        }
+
+        // set column classes
+        if ('sort' in state_cols) {
+            Object.entries(state_cols['sort']).forEach(([idx, value]: [string, any]) => {
+                const col = $.grep(col_heads, (th: HTMLElement) => {
+                    return $(th).css('--pd-df-iloc') === idx;
+                }).pop();
+                $(col || []).addClass(`pd-sort-${value}`);
+            });
+        }
 
         // set row classes
-        Object.entries(JSON.parse(this.model.get('state_rows'))).forEach(([idx, value]: [string, any]) => {
-            const row = $.grep(row_heads, (th: HTMLElement) => {
-                return $(th).css('--pd-df-iloc') === idx;
+        if ('select' in state_rows) {
+            Object.entries(state_rows['select']).forEach(([idx, value]: [string, any]) => {
+                const row = $.grep(row_heads, (th: HTMLElement) => {
+                    return $(th).css('--pd-df-iloc') === idx;
+                }).pop();
+                $(row || []).addClass(`pd-select-${value}`);
             });
-            if (row.length && value.select) {
-                $(row.pop() || []).addClass(`pd-select-${value.select}`);
-            }
-        });
+        }
     }
 
     update_view(): void {

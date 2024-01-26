@@ -78,13 +78,35 @@
     cursor: pointer;
 }
 
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head .pd-col-i-rescale {
+    resize: horizontal;
+    overflow: hidden;
+    display: inline-block;
+    margin: 0px 3px 0px 3px;
+    height: 8px;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head .pd-col-i-rescale::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+}
+
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head:hover .pd-col-i-rescale,
+.pd-ipypandas.pd-touch .pd-view .pd-table thead th.pd-col-head .pd-col-i-rescale {
+    transition: none;
+    opacity: 1;
+}
+
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head .pd-col-i-sort::before {
     content: '';
     display: inline-block;
     border: solid var(--pd-font-color);
     border-width: 0px 2px 2px 0px;
     transform: rotate(45deg);
-    margin: 0px 4px 0px 4px;
+    margin: 0px 6px 3px 3px;
     padding: 2px;
     opacity: 0;
     transition: opacity 0.5s;

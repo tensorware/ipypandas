@@ -5,19 +5,19 @@
 # Distributed under the terms of the Modified BSD License.
 
 import json
-import datetime
 
 import numpy as np
 import pandas as pd
 
+from datetime import datetime
 from collections import defaultdict
 from pandas.io.formats.style import Styler
 
 from ipywidgets import DOMWidget, register
-from traitlets import All, Instance, Unicode, Integer, observe
+from traitlets import Instance, Unicode, Integer, observe
 
-from IPython.core.getipython import get_ipython
 from IPython.display import display
+from IPython.core.getipython import get_ipython
 
 from ._version import module_name, module_version
 
@@ -103,7 +103,7 @@ class PandasWidget(DOMWidget):
         self.df_copy = self.df.copy()
 
         # init view by simulated client update
-        self.downsync = f'init-{datetime.datetime.now().timestamp() * 1000:.0f}'
+        self.downsync = f'init-{datetime.utcnow().timestamp() * 1000:.0f}'
 
         # init pandas widget
         super(PandasWidget, self).__init__(**kwargs)
@@ -124,7 +124,7 @@ class PandasWidget(DOMWidget):
         if viewport_changed:
             self.n_rows = self.df_copy.shape[0]
             self.n_cols = self.df_copy.shape[1]
-            self.upsync = f'reset-{datetime.datetime.now().timestamp() * 1000:.0f}'
+            self.upsync = f'reset-{datetime.utcnow().timestamp() * 1000:.0f}'
             return
 
         # update view representation
@@ -136,7 +136,7 @@ class PandasWidget(DOMWidget):
             return
 
         # consider only string columns
-        cols = self.df_copy.select_dtypes('object')
+        cols = self.df_copy.select_dtypes(['string', 'object'])
         if not any(cols):
             self.df_copy = self.df_copy.head(0)
             return
@@ -149,10 +149,13 @@ class PandasWidget(DOMWidget):
             self.df_copy = self.df_copy.loc[mask.any(axis=1)]
 
     def filter(self):
-        filter_args = defaultdict(list)
-
+        state_cols = json.loads(self.state_cols)
+        if 'filter' not in state_cols:
+            return
+        
         # TODO: generate filter arguments
-        for idx, col in json.loads(self.state_cols).items():
+        filter_args = defaultdict(list)
+        for idx, col in state_cols['filter'].items():
             pass
 
         # filter dataframe
@@ -160,15 +163,15 @@ class PandasWidget(DOMWidget):
             pass
 
     def sort(self):
-        sort_args = defaultdict(list)
+        state_cols = json.loads(self.state_cols)
+        if 'sort' not in state_cols:
+            return
 
         # generate sort arguments
-        for idx, col in json.loads(self.state_cols).items():
-            sort = col['sort']
-            if not sort:
-                continue
-            sort_args['by'].append(self.df_copy.iloc[:, int(idx)].name)
-            sort_args['ascending'].append(sort == 'asc')
+        sort_args = defaultdict(list)
+        for idx, value in state_cols['sort'].items():
+            sort_args['by'].append(self.df_copy.iloc[:, int(idx[5:])].name)
+            sort_args['ascending'].append(value == 'asc')
 
         # sort dataframe
         if sort_args:
@@ -206,19 +209,20 @@ class PandasWidget(DOMWidget):
         column_styles = {}
         for col in self.styler.data.columns:
             iloc = self.df.columns.get_loc(col)
-            column_styles[col] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
+            column_styles[col] = [{'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')]}]
         self.styler.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
 
-        col_text = '<span class="pd-col-text" draggable="true">{0}</span>'
         col_sort_icon = '<span class="pd-col-i-sort"></span>'
         col_filter_icon = '<span class="pd-col-i-filter"></span>'
-        self.styler.format_index(lambda x: f'{col_sort_icon}{col_text}{col_filter_icon}'.format(x), axis=1)
+        col_rescale_icon = '<span class="pd-col-i-rescale"></span>'
+        col_text = '<span class="pd-col-text" draggable="true">{0}</span>'
+        self.styler.format_index(lambda x: f'{col_rescale_icon}{col_sort_icon}{col_text}{col_filter_icon}'.format(x), axis=1)
 
         # row styles
         row_styles = {}
         for row in self.styler.data.index:
             iloc = self.df.index.get_loc(row)
-            row_styles[row] = [{'selector': 'th', 'props': [('--pd-df-iloc', iloc)]}]
+            row_styles[row] = [{'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')]}]
         self.styler.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
 
         row_text = '<span class="pd-row-text">{0}</span>'
