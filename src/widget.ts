@@ -244,6 +244,21 @@ export class PandasView extends DOMWidgetView {
         return this.on_scroll(view);
     }
 
+    on_reorder(view: JQuery<HTMLElement>): boolean {
+        const col_heads = view.find('.pd-col-head');
+        const state_cols = JSON.parse(this.model.get('state_cols'));
+
+        // update object
+        state_cols['order'] = $.map(col_heads, (th: HTMLElement, i: number) => {
+            return $(th).css('--pd-df-iloc');
+        });
+
+        // set model col
+        this.model.set('state_cols', JSON.stringify(state_cols));
+
+        return true;
+    }
+
     on_rescale(th: JQuery<HTMLElement>): boolean {
         const idx = th.css('--pd-df-iloc');
         const width = th.find('.pd-col-i-rescale').width() || 0;
@@ -365,6 +380,7 @@ export class PandasView extends DOMWidgetView {
         /* TODO:
         - fix lazy loading flickering
         - fix focus loss on scrolling
+        - fix reorder with multi-column
         */
         const root = $(this.el);
 
@@ -395,6 +411,38 @@ export class PandasView extends DOMWidgetView {
 
         // handle view events
         $.when(view).then(() => {
+            view.on('dragstart', (e: JQuery.DragStartEvent) => {
+                view.data('dragged', $(e.target).closest('.pd-col-head'));
+            });
+            view.on('dragover', (e: JQuery.DragOverEvent) => {
+                const target = $(e.target);
+
+                // remove dragover class
+                view.find('.pd-col-head').removeClass('pd-dragover');
+
+                // add dragover class
+                target.closest('.pd-col-head').addClass('pd-dragover');
+
+                // prevent default behavior
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            view.on('drop', (e: JQuery.DropEvent) => {
+                const dragged = view.data('dragged');
+                const dropped = $(e.target).closest('.pd-col-head');
+                if (!dragged.is('.pd-col-head') || !dropped.is('.pd-col-head') || dragged.is(dropped)) {
+                    return;
+                }
+
+                // reorder columns
+                $(dragged).insertAfter(dropped);
+                if (this.on_reorder(view)) {
+                    this.downsync('reorder');
+                }
+            });
+            view.on('dragend', (e: JQuery.DragEndEvent) => {
+                view.find('.pd-col-head').removeClass('pd-dragover');
+            });
             view.on('scroll', (e: JQuery.ScrollEvent) => {
                 const target = $(e.target);
 
@@ -503,8 +551,8 @@ export class PandasView extends DOMWidgetView {
             Object.entries(state_cols['width']).forEach(([idx, value]: [string, any]) => {
                 const col = $.grep(col_heads, (th: HTMLElement) => {
                     return $(th).css('--pd-df-iloc') === idx;
-                }).pop();
-                const rescale = $(col || []).find('.pd-col-i-rescale');
+                });
+                const rescale = $(col).find('.pd-col-i-rescale');
                 rescale.css({ width: value + 'px' });
             });
         }
@@ -514,8 +562,8 @@ export class PandasView extends DOMWidgetView {
             Object.entries(state_cols['sort']).forEach(([idx, value]: [string, any]) => {
                 const col = $.grep(col_heads, (th: HTMLElement) => {
                     return $(th).css('--pd-df-iloc') === idx;
-                }).pop();
-                $(col || []).addClass(`pd-sort-${value}`);
+                });
+                $(col).addClass(`pd-sort-${value}`);
             });
         }
 
@@ -524,8 +572,8 @@ export class PandasView extends DOMWidgetView {
             Object.entries(state_rows['select']).forEach(([idx, value]: [string, any]) => {
                 const row = $.grep(row_heads, (th: HTMLElement) => {
                     return $(th).css('--pd-df-iloc') === idx;
-                }).pop();
-                $(row || []).addClass(`pd-select-${value}`);
+                });
+                $(row).addClass(`pd-select-${value}`);
             });
         }
     }
@@ -573,8 +621,8 @@ export class PandasView extends DOMWidgetView {
 
     class_suffix(target: JQuery<HTMLElement>, match: string): string {
         const classes = (target.attr('class') || '').split(/\s+/);
-        const r = $.grep(classes, (x) => x.indexOf(match) === 0).join();
-        return r.split('-').pop() || '';
+        const result = $.grep(classes, (x) => x.indexOf(match) === 0).join();
+        return result.split('-').pop() || '';
     }
 
     round_to(value: number, multiple: number): number {

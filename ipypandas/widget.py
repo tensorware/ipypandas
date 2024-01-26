@@ -152,7 +152,7 @@ class PandasWidget(DOMWidget):
         state_cols = json.loads(self.state_cols)
         if 'filter' not in state_cols:
             return
-        
+
         # TODO: generate filter arguments
         filter_args = defaultdict(list)
         for idx, col in state_cols['filter'].items():
@@ -181,14 +181,17 @@ class PandasWidget(DOMWidget):
     def styles(self):
         """ TODO:
         - tooltips can only render when 'cell_ids' is true
-        - check set_sticky as alternative or interactions
+        - check set_sticky interactions
         """
 
         # use sliced dataframe
         self.styler.data = self.df_copy.iloc[self.start_row:self.end_row]
 
-        # disable cell ids
-        self.styler.cell_ids = False
+        # use columns by sort order
+        state_cols = json.loads(self.state_cols)
+        if 'order' in state_cols:
+            columns = [self.df_copy.iloc[:, int(idx[5:])].name for idx in state_cols['order']]
+            self.styler.data = self.styler.data.reindex(columns, axis='columns')
 
         # table styles
         self.styler.table_attributes = 'class="pd-table"'
@@ -227,6 +230,9 @@ class PandasWidget(DOMWidget):
 
         row_text = '<span class="pd-row-text">{0}</span>'
         self.styler.format_index(lambda x: f'{row_text}'.format(x), axis=0)
+
+        # disable cell ids
+        self.styler.cell_ids = False
 
         return self.styler
 

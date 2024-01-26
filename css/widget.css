@@ -18,6 +18,8 @@
     --pd-body-padding-top: 0px;
     --pd-body-padding-bottom: 0px;
     --pd-body-td-max-width: 1ch;
+
+    --pd-body-th-dragover-color: var(--jp-rendermime-table-row-hover-background);
     --pd-body-tr-select-color: var(--jp-rendermime-table-row-hover-background);
 
     --pd-footer-padding-top: 12px;
@@ -127,11 +129,12 @@
 }
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head .pd-col-text {
+    cursor: grab;
     white-space: nowrap;
 }
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head .pd-col-i-filter {
-    margin: 0px -12px 0px 0px;
+    margin: 0px -8px 0px 0px;
     padding: 0px 3px 0px 3px;
 }
 
@@ -151,6 +154,10 @@
 .pd-ipypandas.pd-touch .pd-view .pd-table thead th.pd-col-head .pd-col-i-filter::before {
     transition: none;
     opacity: 1;
+}
+
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head.pd-dragover {
+    background-color: var(--pd-body-th-dragover-color);
 }
 
 .pd-ipypandas .pd-view .pd-table tbody::before {
@@ -173,6 +180,10 @@
     box-shadow: var(--pd-border-width) 0 var(--pd-border-color);
 }
 
+.pd-ipypandas .pd-view .pd-table tbody tr:hover th {
+    background-color: var(--pd-body-tr-select-color);
+}
+
 .pd-ipypandas .pd-view .pd-table tbody th.pd-row-head {
     white-space: nowrap;
 }
@@ -186,7 +197,8 @@
     white-space: nowrap;
 }
 
-.pd-ipypandas .pd-view .pd-table tbody th.pd-row-head.pd-select-active {
+.pd-ipypandas .pd-view .pd-table tbody th.pd-row-head.pd-select-active,
+.pd-ipypandas .pd-view .pd-table tbody th.pd-row-head.pd-select-active~td.pd-data {
     background-color: var(--pd-body-tr-select-color);
 }
 
