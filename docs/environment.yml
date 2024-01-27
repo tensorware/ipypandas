@@ -1,11 +1,11 @@
 name: ipypandas-docs
 channels:
-  - conda-forge
+    - conda-forge
 dependencies:
-  - python=3.*
-  - nodejs
-  - nbsphinx
-  - nbsphinx-link
-  - sphinx
-  - sphinx_rtd_theme
-  - jupyter_sphinx
+    - python=3.*
+    - nodejs
+    - nbsphinx
+    - nbsphinx-link
+    - sphinx
+    - sphinx_rtd_theme
+    - jupyter_sphinx

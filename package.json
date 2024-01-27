@@ -8,28 +8,43 @@
         "jupyterlab",
         "jupyterlab-extension"
     ],
-    "files": [
-        "dist/**/*.js",
-        "lib/**/*.js"
-    ],
-    "homepage": "https://github.com/tensorware/ipypandas",
-    "bugs": {
-        "url": "https://github.com/tensorware/ipypandas/issues"
-    },
     "license": "BSD-3-Clause",
+    "homepage": "https://github.com/tensorware/ipypandas",
     "author": {
         "name": "Tensorware",
         "email": "development@tensorware.net"
     },
-    "main": "./lib/index.js",
-    "types": "./lib/index.d.ts",
-    "style": "./src/styles/index.css",
     "repository": {
         "type": "git",
         "url": "https://github.com/tensorware/ipypandas"
     },
+    "bugs": {
+        "url": "https://github.com/tensorware/ipypandas/issues"
+    },
+    "files": [
+        "dist/**/*.js",
+        "lib/**/*.js"
+    ],
+    "main": "./lib/index.js",
+    "types": "./lib/index.d.ts",
+    "style": "./src/styles/index.css",
+    "jupyterlab": {
+        "extension": "lib/plugin",
+        "outputDir": "ipypandas/labextension",
+        "sharedPackages": {
+            "@jupyter-widgets/base": {
+                "bundled": false,
+                "singleton": true
+            }
+        }
+    },
+    "prettier": {
+        "tabWidth": 4,
+        "printWidth": 200,
+        "singleQuote": true
+    },
     "scripts": {
-        "test": "jest",
+        "test": "jest && pytest",
         "lint": "eslint . --ext .ts,.tsx",
         "build": "yarn run build:less && yarn run build:lib && yarn run build:labextension",
         "build:lib": "tsc && webpack",
@@ -79,15 +94,5 @@
         "typescript": "^5.3.3",
         "webpack": "^5.90.0",
         "webpack-cli": "^5.1.4"
-    },
-    "jupyterlab": {
-        "extension": "lib/plugin",
-        "outputDir": "ipypandas/labextension/",
-        "sharedPackages": {
-            "@jupyter-widgets/base": {
-                "bundled": false,
-                "singleton": true
-            }
-        }
     }
 }

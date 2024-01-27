@@ -14,6 +14,10 @@ To get started with ipypandas, install with pip::
 
     pip install ipypandas
 
+Importing ipypandas will enable the interactive pandas output globally::
+
+    import ipypandas
+
 
 Contents
 --------
@@ -26,17 +30,16 @@ Contents
    introduction
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Usage
 
    examples/index
-
 
 .. toctree::
    :maxdepth: 2
    :caption: Development
 
-   dev-install
+   development/index
 
 
 .. links

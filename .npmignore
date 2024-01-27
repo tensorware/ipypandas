@@ -1,6 +1,0 @@
-.DS_Store
-.jshintrc
-node_modules/
-tests/
-dist/
-lib/

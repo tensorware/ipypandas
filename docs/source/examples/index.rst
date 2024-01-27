@@ -12,6 +12,8 @@ The widgets have been embedded into the page for demonstrative purposes.
     are suited for inclusion are used.
 
 .. toctree::
-    :glob:
+    :maxdepth: 2
+    :caption: Notebooks
 
-    *
+    usage.nblink
+    style.nblink

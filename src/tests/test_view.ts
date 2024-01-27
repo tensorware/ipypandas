@@ -6,6 +6,8 @@ import { createTestView } from './utils';
 
 describe('PandasView', () => {
     it('should not be createable', () => {
-        expect(() => { createTestView(PandasView) }).toThrow(TypeError);
+        expect(() => {
+            createTestView(PandasView);
+        }).toThrow(TypeError);
     });
 });

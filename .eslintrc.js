@@ -5,13 +5,19 @@ module.exports = {
         'plugin:@typescript-eslint/recommended',
         'plugin:prettier/recommended'
     ],
+    plugins: [
+      '@typescript-eslint'
+    ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
         sourceType: 'module',
         project: 'tsconfig.json'
     },
-    plugins: [
-        '@typescript-eslint'
+    ignorePatterns: [
+      '**/node_modules',
+      '**/dist',
+      '**/lib',
+      '*.js'
     ],
     rules: {
         '@typescript-eslint/no-use-before-define': 'off',
