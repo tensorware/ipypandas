@@ -45,10 +45,11 @@ class PandasWidget(DOMWidget):
     styler = Instance(Styler)
     view = Unicode('<div/>').tag(sync=True)
 
-    # ranges
+    # options
     min_rows = Integer(0).tag(sync=True)
     max_rows = Integer(0).tag(sync=True)
     max_colwidth = Integer(0).tag(sync=True)
+    precision = Integer(0).tag(sync=True)
 
     # viewport
     n_rows = Integer(0).tag(sync=True)
@@ -85,6 +86,10 @@ class PandasWidget(DOMWidget):
         # init max column width
         if 'max_colwidth' not in kwargs:
             self.max_colwidth = pd.get_option('display.max_colwidth') or 0
+
+        # init float precision
+        if 'precision' not in kwargs:
+            self.precision = pd.get_option('display.precision') or 6
 
         # init dimensions
         self.n_rows = self.df.shape[0]
@@ -227,6 +232,9 @@ class PandasWidget(DOMWidget):
 
         row_text = '<span class="pd-row-text">{0}</span>'
         self.styler.format_index(lambda x: f'{row_text}'.format(x), axis=0)
+
+        # content styles
+        self.styler.format(precision=self.precision)
 
         # disable cell ids
         self.styler.cell_ids = False
