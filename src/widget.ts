@@ -159,9 +159,9 @@ export class PandasView extends DOMWidgetView {
         const padding_top = start_row * row_height;
         const padding_bottom = (this.model.get('n_rows') - end_row) * row_height;
         body.css({
-            '--pd-body-padding-top': padding_top + 'px',
-            '--pd-body-padding-bottom': padding_bottom + 'px',
-            '--pd-body-td-max-width': this.model.get('max_colwidth') + 'ch',
+            '--pd-body-padding-top': `${padding_top}px`,
+            '--pd-body-padding-bottom': `${padding_bottom}px`,
+            '--pd-body-td-max-width': `${this.model.get('max_colwidth')}ch`,
         });
 
         // set model range
@@ -188,8 +188,8 @@ export class PandasView extends DOMWidgetView {
         // set viewport height
         view.css({
             '--pd-view-resize': resize,
-            '--pd-view-min-height': min_height + 'px',
-            '--pd-view-max-height': max_height + 'px',
+            '--pd-view-min-height': `${min_height}px`,
+            '--pd-view-max-height': `${max_height}px`,
         });
 
         // increase viewport height (in case horizontal scrollbars exists)
@@ -197,8 +197,8 @@ export class PandasView extends DOMWidgetView {
         max_height += scroll_bar_height;
         min_height += scroll_bar_height;
         view.css({
-            '--pd-view-min-height': min_height + 'px',
-            '--pd-view-max-height': max_height + 'px',
+            '--pd-view-min-height': `${min_height}px`,
+            '--pd-view-max-height': `${max_height}px`,
         });
 
         // set model height
@@ -388,7 +388,7 @@ export class PandasView extends DOMWidgetView {
         root.css({
             '--pd-root-opacity': '0',
             '--pd-root-cursor': 'progress',
-            '--pd-root-min-height': (root.height() || 0) + 'px',
+            '--pd-root-min-height': `${root.height() || 0}px`,
         });
         root.empty();
 
@@ -546,14 +546,14 @@ export class PandasView extends DOMWidgetView {
         const state_cols = JSON.parse(this.model.get('state_cols'));
         const state_rows = JSON.parse(this.model.get('state_rows'));
 
-        // set column width
+        // set column header width
         if ('width' in state_cols) {
             Object.entries(state_cols['width']).forEach(([idx, value]: [string, any]) => {
                 const col = $.grep(col_heads, (th: HTMLElement) => {
                     return $(th).css('--pd-df-iloc') === idx;
                 });
                 const rescale = $(col).find('.pd-col-i-rescale');
-                rescale.css({ width: value + 'px' });
+                rescale.css({ width: `${value}px` });
             });
         }
 
@@ -576,6 +576,18 @@ export class PandasView extends DOMWidgetView {
                 $(row).addClass(`pd-select-${value}`);
             });
         }
+
+        // set row index position
+        let offset = -1;
+        view.find('th.pd-index').each((i: number, th: HTMLElement) => {
+            const left = $(th).position().left;
+            offset = offset < 0 ? left : offset;
+            $(th).css({ left: `${left - offset}px` });
+        });
+        view.find('th.pd-row-head').each((i: number, th: HTMLElement) => {
+            const left = $(th).position().left;
+            $(th).css({ left: `${left}px` });
+        });
     }
 
     update_view(): void {
@@ -586,7 +598,7 @@ export class PandasView extends DOMWidgetView {
         view.scrollLeft(this.model.get('_scroll_left'));
 
         // set height
-        view.css({ '--pd-view-height': this.model.get('_view_height') + 'px' });
+        view.css({ '--pd-view-height': `${this.model.get('_view_height')}px` });
     }
 
     update_footer(): void {
@@ -595,7 +607,7 @@ export class PandasView extends DOMWidgetView {
         const table = view.children('.pd-table');
 
         // set maximum width
-        footer.css({ '--pd-footer-max-width': (table.width() || 0) + 'px' });
+        footer.css({ '--pd-footer-max-width': `${table.width() || 0}px` });
     }
 
     class_rotate(target: JQuery<HTMLElement>, classes: string[]): string {

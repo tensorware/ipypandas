@@ -71,6 +71,13 @@
     box-shadow: 0 var(--pd-border-width) var(--pd-border-color);
 }
 
+.pd-ipypandas .pd-view .pd-table thead th.pd-index {
+    left: 0;
+    z-index: 2;
+    position: sticky;
+    background-color: var(--pd-header-color);
+}
+
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head {
     white-space: nowrap;
 }
@@ -172,20 +179,17 @@
     height: var(--pd-body-padding-bottom);
 }
 
-.pd-ipypandas .pd-view .pd-table tbody th {
-    left: 0;
-    z-index: 1;
-    position: sticky;
-    background-color: var(--pd-header-color);
-    box-shadow: var(--pd-border-width) 0 var(--pd-border-color);
-}
-
 .pd-ipypandas .pd-view .pd-table tbody tr:hover th {
     background-color: var(--pd-body-tr-select-color);
 }
 
 .pd-ipypandas .pd-view .pd-table tbody th.pd-row-head {
+    left: 0;
+    z-index: 1;
+    position: sticky;
     white-space: nowrap;
+    background-color: var(--pd-header-color);
+    box-shadow: var(--pd-border-width) 0 var(--pd-border-color);
 }
 
 .pd-ipypandas .pd-view .pd-table tbody th.pd-row-head:hover,

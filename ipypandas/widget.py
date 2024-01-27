@@ -179,7 +179,6 @@ class PandasWidget(DOMWidget):
     def styles(self):
         """ TODO:
         - tooltips can only render when 'cell_ids' is true
-        - check set_sticky interactions
         """
 
         # use sliced dataframe
