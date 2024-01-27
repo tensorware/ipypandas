@@ -8,4 +8,4 @@ coverage:
       default:
         target: 0%
 ignore:
-  - "ipypandas/tests"
+  - 'ipypandas/tests'

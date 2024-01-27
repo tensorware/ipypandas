@@ -7,7 +7,7 @@
         "**/.pytest_cache": true,
         "**/__pycache__": true
     },
-    "editor.tabSize": 4,
+    "editor.tabSize": 2,
     "editor.insertSpaces": true,
     "editor.formatOnSave": true,
     "notebook.formatOnSave.enabled": true,

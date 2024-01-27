@@ -4,7 +4,7 @@ on:
   push:
     branches: main
   pull_request:
-    branches: "*"
+    branches: '*'
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.8", "3.12"]
+        python-version: ['3.8', '3.12']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          node_version: "20.0"
+          node_version: '20.0'
 
       - name: Install Dependencies
         run: |
@@ -37,7 +37,7 @@ jobs:
       - name: Check Linting
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          yarn run lint:check
+          yarn run lint
 
       - name: Check Documentation
         if: ${{ matrix.os == 'ubuntu-latest' }}
