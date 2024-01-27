@@ -25,9 +25,9 @@
         "dist/**/*.js",
         "lib/**/*.js"
     ],
-    "main": "./lib/index.js",
-    "types": "./lib/index.d.ts",
-    "style": "./src/styles/index.css",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "style": "src/styles/index.css",
     "jupyterlab": {
         "extension": "lib/plugin",
         "outputDir": "ipypandas/labextension",
@@ -42,6 +42,54 @@
         "tabWidth": 4,
         "printWidth": 200,
         "singleQuote": true
+    },
+    "babel": {
+        "sourceMap": "inline",
+        "presets": [
+            [
+                "@babel/preset-env",
+                {
+                    "targets": {
+                        "node": "current"
+                    }
+                }
+            ]
+        ]
+    },
+    "jest": {
+        "automock": false,
+        "testEnvironment": "jsdom",
+        "preset": "ts-jest/presets/js-with-babel",
+        "setupFilesAfterEnv": [
+            "./src/tests/setup.js"
+        ],
+        "moduleFileExtensions": [
+            "ts",
+            "tsx",
+            "js",
+            "jsx",
+            "json",
+            "node"
+        ],
+        "testRegex": "/tests/test_.*.ts[x]?$",
+        "testPathIgnorePatterns": [
+            "/lib/",
+            "/node_modules/"
+        ],
+        "moduleNameMapper": {
+            "\\.(css|less|sass|scss)$": "identity-obj-proxy"
+        },
+        "transform": {
+            "^.+\\.(ts|tsx)$": [
+                "ts-jest",
+                {
+                    "tsconfig": "<rootDir>/tsconfig.json"
+                }
+            ]
+        },
+        "transformIgnorePatterns": [
+            "/node_modules/(?!(@jupyter(lab|-widgets)/.*)/)"
+        ]
     },
     "scripts": {
         "test": "jest && pytest",
