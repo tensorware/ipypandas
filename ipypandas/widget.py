@@ -5,8 +5,6 @@
 # Distributed under the terms of the Modified BSD License.
 
 import json
-
-import numpy as np
 import pandas as pd
 
 from datetime import datetime
@@ -131,22 +129,22 @@ class PandasWidget(DOMWidget):
         self.view = self.styles().to_html()
 
     def search(self):
-        search_args = self.search_query.replace(',', ' ').split()
-        if not any(search_args):
+        search_args = self.search_query.split('&')
+        if len(search_args) == 0:
             return
 
-        # consider only string columns
-        cols = self.df_copy.select_dtypes(['string', 'object'])
-        if not any(cols):
+        # convert to string columns
+        df_str = self.df_copy.astype(str, errors='ignore').select_dtypes(include=['object', 'string'])
+        if df_str.shape[0] == 0 or df_str.shape[1] == 0:
             self.df_copy = self.df_copy.head(0)
             return
 
-        # search dataframe
+        # search dataframe by string contains
         query_args = dict(na=False, case=False, regex=True)
         for query in search_args:
-            results = [self.df_copy[col].str.contains(query, **query_args) for col in cols]
-            mask = np.column_stack(results)
-            self.df_copy = self.df_copy.loc[mask.any(axis=1)]
+            mask = df_str.apply(lambda row: row.str.contains(query.strip(), **query_args)).any(axis=1)
+            self.df_copy = self.df_copy.loc[mask]
+            df_str = df_str.loc[mask]
 
     def filter(self):
         state_cols = json.loads(self.state_cols)
@@ -243,20 +241,22 @@ class PandasWidget(DOMWidget):
 
 def formatter():
     ipy = get_ipython()
-    if ipy is None:
-        return
-    if ipy.display_formatter is None:
-        return
+    if ipy is None or ipy.display_formatter is None:
+        return None
     return ipy.display_formatter.ipython_display_formatter
 
 
 def enable(**kwargs):
     ipy_fmt = formatter()
+    if ipy_fmt is None:
+        return
     ipy_fmt.for_type(pd.DataFrame, lambda df: display(PandasWidget(df=df, **kwargs)))
     ipy_fmt.for_type(Styler, lambda styler: display(PandasWidget(styler=styler, **kwargs)))
 
 
 def disable():
     ipy_fmt = formatter()
+    if ipy_fmt is None:
+        return
     ipy_fmt.type_printers.pop(pd.DataFrame, None)
     ipy_fmt.type_printers.pop(Styler, None)
