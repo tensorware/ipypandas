@@ -216,9 +216,9 @@ class PandasWidget(DOMWidget):
 
         draggable = str(not isinstance(self.df_copy.columns, pd.MultiIndex)).lower()
         col_text = f'<span class="pd-col-text" draggable="{draggable}">{{0}}</span>'
-        col_rescale_icon = '<span class="pd-col-i-rescale"></span>'
-        col_filter_icon = '<span class="pd-col-i-filter"></span>'
-        col_sort_icon = '<span class="pd-col-i-sort"></span>'
+        col_rescale_icon = '<span class="pd-col-i-rescale"><span></span></span>'
+        col_filter_icon = '<span class="pd-col-i-filter"><span></span></span>'
+        col_sort_icon = '<span class="pd-col-i-sort"><span></span></span>'
         self.styler.format_index(lambda x: f'{col_rescale_icon}{col_sort_icon}{col_text}{col_filter_icon}'.format(x), axis=1)
 
         # row styles

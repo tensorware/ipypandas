@@ -262,7 +262,7 @@ export class PandasView extends DOMWidgetView {
 
     on_rescale(th: JQuery<HTMLElement>): boolean {
         const idx = th.css('--pd-df-iloc');
-        const width = th.find('.pd-col-i-rescale').width() || 0;
+        const width = th.find('.pd-col-i-rescale > span').width() || 0;
         const state_cols = JSON.parse(this.model.get('state_cols'));
 
         // create object
@@ -462,7 +462,7 @@ export class PandasView extends DOMWidgetView {
                 const col_head = target.closest('.pd-col-head');
                 if (col_head.length) {
                     this.on_rescale(col_head);
-                    if (target.is('.pd-col-i-filter')) {
+                    if (target.closest('.pd-col-i-filter').length) {
                         if (!filter.length) {
                             root.append(this.get_filter(col_head));
                             col_head.addClass('pd-filter-active');
@@ -548,7 +548,7 @@ export class PandasView extends DOMWidgetView {
                 const col = $.grep(col_heads, (th: HTMLElement) => {
                     return $(th).css('--pd-df-iloc') === idx;
                 });
-                const rescale = $(col).find('.pd-col-i-rescale');
+                const rescale = $(col).find('.pd-col-i-rescale > span');
                 rescale.css({ width: `${value}px` });
             });
         }
