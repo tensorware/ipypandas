@@ -1,29 +1,29 @@
 {
     "compilerOptions": {
-        "declaration": true,
-        "esModuleInterop": true,
+        "outDir": "lib",
+        "rootDir": "src",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es2020",
         "lib": [
             "es2020",
             "dom"
         ],
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "noEmitOnError": true,
-        "noUnusedLocals": true,
-        "outDir": "lib",
-        "resolveJsonModule": true,
-        "rootDir": "src",
-        "skipLibCheck": true,
-        "sourceMap": true,
-        "strict": true,
-        "strictPropertyInitialization": false,
-        "target": "es2020",
         "types": [
             "jest"
-        ]
+        ],
+        "strict": true,
+        "sourceMap": true,
+        "declaration": true,
+        "skipLibCheck": true,
+        "noEmitOnError": true,
+        "noUnusedLocals": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "strictPropertyInitialization": false
     },
     "include": [
         "src/**/*.ts",
-        "src/**/*.tsx",
+        "src/**/*.tsx"
     ]
 }

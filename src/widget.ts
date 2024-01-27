@@ -3,8 +3,9 @@
 
 import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
 import { MODULE_NAME, MODULE_VERSION } from './version';
+
 import $ from 'jquery';
-import '../css/widget.css';
+import '../src/styles/index.css';
 
 export class PandasModel extends DOMWidgetModel {
     static serializers: ISerializers = {

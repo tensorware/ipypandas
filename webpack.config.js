@@ -3,8 +3,27 @@ const version = require('./package.json').version;
 
 const mode = 'production'
 const externals = ['@jupyter-widgets/base'];
-const resolve = { extensions: ['.webpack.js', '.web.js', '.ts', '.js'] };
-const rules = [{ test: /\.ts$/, loader: 'ts-loader' }, { test: /\.js$/, loader: 'source-map-loader' }, { test: /\.css$/, use: ['style-loader', 'css-loader'] }];
+const resolve = {
+    extensions: ['.webpack.js', '.web.js', '.js', '.ts']
+};
+const rules = [
+    {
+        test: /\.ts$/,
+        use: [{ loader: 'ts-loader' }]
+    },
+    {
+        test: /\.js$/,
+        use: [{ loader: 'source-map-loader' }]
+    },
+    {
+        test: /\.css$/,
+        use: [{ loader: 'style-loader' }, { loader: 'css-loader' }]
+    },
+    {
+        test: /\.less$/,
+        use: [{ loader: 'file-loader' }, { loader: 'style-loader' }, { loader: 'less-loader' }, { loader: 'css-loader' }]
+    }
+];
 
 module.exports = [
     /**
@@ -12,38 +31,38 @@ module.exports = [
      */
     {
         entry: './src/index.ts',
-        mode: mode,
+        devtool: 'source-map',
         output: {
             filename: 'index.js',
             path: path.resolve(__dirname, 'dist'),
-            libraryTarget: 'amd',
             library: 'ipypandas',
+            libraryTarget: 'amd',
             publicPath: 'https://unpkg.com/ipypandas@' + version + '/dist/'
         },
-        devtool: 'source-map',
+        mode: mode,
         module: {
             rules: rules
         },
         externals,
-        resolve,
+        resolve
     },
     /**
      * Embed widgets in the package documentation.
      */
     {
         entry: './src/index.ts',
-        mode: mode,
+        devtool: 'source-map',
         output: {
-            filename: 'embed-bundle.js',
-            path: path.resolve(__dirname, 'docs', 'source', '_static'),
+            filename: 'embed.js',
+            path: path.resolve(__dirname, 'docs', 'source', 'static'),
             library: 'ipypandas',
             libraryTarget: 'amd'
         },
+        mode: mode,
         module: {
             rules: rules
         },
-        devtool: 'source-map',
         externals,
-        resolve,
+        resolve
     }
 ];

@@ -115,13 +115,13 @@ if not on_rtd:
     import sphinx_rtd_theme
     html_theme = 'sphinx_rtd_theme'
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-html_static_path = ['_static']
+html_static_path = ['static']
 html_css_files = ['theme.css']
 htmlhelp_basename = 'ipypandasdoc'
 
 
 def setup(app):
     def add_scripts(app):
-        for fname in ['helper.js', 'embed-bundle.js']:
+        for fname in ['helper.js', 'embed.js']:
             app.add_js_file(fname)
     app.connect('builder-inited', add_scripts)

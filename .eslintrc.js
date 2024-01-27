@@ -7,8 +7,8 @@ module.exports = {
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
-        project: 'tsconfig.eslint.json',
-        sourceType: 'module'
+        sourceType: 'module',
+        project: 'tsconfig.json'
     },
     plugins: [
         '@typescript-eslint'
@@ -32,11 +32,11 @@ module.exports = {
                 allowTemplateLiterals: false
             }
         ],
-        curly: [
+        'curly': [
             'error',
             'all'
         ],
-        eqeqeq: 'error',
+        'eqeqeq': 'error',
         'prefer-arrow-callback': 'error'
     }
 };

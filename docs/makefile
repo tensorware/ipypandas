@@ -12,8 +12,8 @@ SPHINXOPTS    =
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile
+.PHONY: help makefile
 
 # Route all unknown targets to Sphinx using the new "make mode" option.
-%: Makefile
+%: makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
