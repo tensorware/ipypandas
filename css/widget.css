@@ -136,8 +136,11 @@
 }
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head .pd-col-text {
-    cursor: grab;
     white-space: nowrap;
+}
+
+.pd-ipypandas .pd-view .pd-table thead th.pd-col-head .pd-col-text[draggable="true"] {
+    cursor: grab;
 }
 
 .pd-ipypandas .pd-view .pd-table thead th.pd-col-head .pd-col-i-filter {

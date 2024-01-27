@@ -377,11 +377,6 @@ export class PandasView extends DOMWidgetView {
     }
 
     update_data(): void {
-        /* TODO:
-        - fix lazy loading flickering
-        - fix focus loss on scrolling
-        - fix reorder with multi-column
-        */
         const root = $(this.el);
 
         // hide root

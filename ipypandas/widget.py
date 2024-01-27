@@ -182,9 +182,6 @@ class PandasWidget(DOMWidget):
             self.df_copy.sort_values(**sort_args)
 
     def styles(self):
-        """ TODO:
-        - tooltips can only render when 'cell_ids' is true
-        """
 
         # use sliced dataframe
         self.styler.data = self.df_copy.iloc[self.start_row:self.end_row]
@@ -213,20 +210,21 @@ class PandasWidget(DOMWidget):
         # column styles
         column_styles = {}
         for col in self.styler.data.columns:
-            iloc = self.df.columns.get_loc(col)
+            iloc = self.df_copy.columns.get_loc(col)
             column_styles[col] = [{'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')]}]
         self.styler.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
 
-        col_sort_icon = '<span class="pd-col-i-sort"></span>'
-        col_filter_icon = '<span class="pd-col-i-filter"></span>'
+        draggable = str(not isinstance(self.df_copy.columns, pd.MultiIndex)).lower()
+        col_text = f'<span class="pd-col-text" draggable="{draggable}">{{0}}</span>'
         col_rescale_icon = '<span class="pd-col-i-rescale"></span>'
-        col_text = '<span class="pd-col-text" draggable="true">{0}</span>'
+        col_filter_icon = '<span class="pd-col-i-filter"></span>'
+        col_sort_icon = '<span class="pd-col-i-sort"></span>'
         self.styler.format_index(lambda x: f'{col_rescale_icon}{col_sort_icon}{col_text}{col_filter_icon}'.format(x), axis=1)
 
         # row styles
         row_styles = {}
         for row in self.styler.data.index:
-            iloc = self.df.index.get_loc(row)
+            iloc = self.df_copy.index.get_loc(row)
             row_styles[row] = [{'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')]}]
         self.styler.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
 
