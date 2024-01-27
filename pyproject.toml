@@ -49,14 +49,13 @@ tests = [
     "pytest>=6.0",
 ]
 docs = [
-    "jupyter_sphinx",
+    "pypandoc",
     "nbsphinx",
     "nbsphinx-link",
-    "pypandoc",
+    "jupyter_sphinx",
     "pytest_check_links",
-    "recommonmark",
-    "sphinx>=1.5",
     "sphinx_rtd_theme",
+    "sphinx>=1.5",
 ]
 
 [project.urls]
