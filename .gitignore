@@ -34,6 +34,7 @@ pip-delete-this-directory.txt
 .yarn
 .pnp.*
 **/node_modules/
+src/styles/*.css
 ipypandas/labextension
 
 # Tests
@@ -50,8 +51,8 @@ coverage.xml
 .hypothesis/
 
 # Documentation
-docs/_build/
-docs/source/_static/embed-bundle.*
+docs/build/
+docs/source/static/embed.*
 
 # Mac
 ._*
