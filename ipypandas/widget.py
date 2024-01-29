@@ -17,7 +17,7 @@ from traitlets import Instance, Unicode, Integer, observe
 from IPython.display import display
 from IPython.core.getipython import get_ipython
 
-from ._version import module_name, module_version
+from ._version import module_version, module_name, module_log
 
 
 @register
@@ -36,6 +36,7 @@ class PandasWidget(DOMWidget):
     # sync flags between client and server
     upsync = Unicode('').tag(sync=True)
     downsync = Unicode('').tag(sync=True)
+    logger = Unicode('{}').tag(sync=True)
 
     # dataframe
     df = Instance(pd.DataFrame)
@@ -108,13 +109,14 @@ class PandasWidget(DOMWidget):
         self.styler_copy = self.styler._copy(True)
 
         # init view by simulated client update
-        self.downsync = f'init-{datetime.utcnow().timestamp() * 1000:.0f}'
+        self.downsync = f'init-{datetime.now().timestamp() * 1000:.0f}'
 
         # init pandas widget
         super(PandasWidget, self).__init__(**kwargs)
 
     @observe('downsync')
     def update(self, change):
+        self.log('info', 'update widget')
 
         # copy original data
         self.df_copy = self.df.copy()
@@ -130,7 +132,7 @@ class PandasWidget(DOMWidget):
         if viewport_changed:
             self.n_rows = self.df_copy.shape[0]
             self.n_cols = self.df_copy.shape[1]
-            self.upsync = f'reset-{datetime.utcnow().timestamp() * 1000:.0f}'
+            self.upsync = f'reset-{datetime.now().timestamp() * 1000:.0f}'
             return
 
         # update view representation
@@ -265,6 +267,19 @@ class PandasWidget(DOMWidget):
             display_funcs_columns[key] = func(func1, func2)
 
         return styler
+
+    def log(self, level, message):
+        levels = { 'info': 0, 'warn': 1, 'error': 2 }
+        if not (levels[level] >= levels[module_log]):
+            return
+
+        # send log message to client
+        self.logger = json.dumps({
+            'date': f'{datetime.now().timestamp() * 1000:.0f}',
+            'source': 'ipypandas, widget.py',
+            'level': levels[level],
+            'message': message
+        })
 
     def __repr__(self):
         rows, cols = self.df_copy.shape

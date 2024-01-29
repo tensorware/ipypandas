@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
-import { MODULE_NAME, MODULE_VERSION } from './version';
+import { MODULE_VERSION, MODULE_NAME, MODULE_LOG } from './version';
 
 import $ from 'jquery';
 import '../src/styles/index.css';
@@ -48,8 +48,9 @@ export class PandasView extends DOMWidgetView {
         this.update_data();
 
         // register change events
-        this.model.on('change:view', this.update_data, this);
         this.model.on('change:upsync', this.reset_data, this);
+        this.model.on('change:view', this.update_data, this);
+        this.model.on('change:logger', this.logger, this);
     }
 
     get_view(): JQuery<HTMLElement> {
@@ -412,13 +413,16 @@ export class PandasView extends DOMWidgetView {
                 view.data('dragged', $(e.target).closest('.pd-col-head'));
             });
             view.on('dragover', (e: JQuery.DragOverEvent) => {
-                const target = $(e.target);
+                const dragged = view.data('dragged');
+                if (!dragged) {
+                    return;
+                }
 
                 // remove dragover class
                 view.find('.pd-col-head').removeClass('pd-dragover');
 
                 // add dragover class
-                target.closest('.pd-col-head').addClass('pd-dragover');
+                $(e.target).closest('.pd-col-head').addClass('pd-dragover');
 
                 // prevent default behavior
                 e.preventDefault();
@@ -430,6 +434,7 @@ export class PandasView extends DOMWidgetView {
                 if (!dragged.is('.pd-col-head') || !dropped.is('.pd-col-head') || dragged.is(dropped)) {
                     return;
                 }
+                view.removeData('dragged');
 
                 // reorder columns
                 $(dragged).insertAfter(dropped);
@@ -609,6 +614,7 @@ export class PandasView extends DOMWidgetView {
 
         // set height
         view.css({ '--pd-view-height': `${this.model.get('_view_height')}px` });
+        this.log('info', 'update view');
     }
 
     update_footer(): void {
@@ -674,6 +680,44 @@ export class PandasView extends DOMWidgetView {
 
     round_to(value: number, multiple: number): number {
         return multiple * Math.round(value / multiple);
+    }
+
+    log(level: string, message: string): void {
+        const levels: { [key: string]: any } = { info: 0, warn: 1, error: 2 };
+        if (!(levels[level] >= levels[MODULE_LOG])) {
+            return;
+        }
+
+        // send log message to console
+        this.logger(
+            this,
+            JSON.stringify({
+                date: `${Date.now()}`,
+                source: 'ipypandas, widget.ts',
+                level: levels[level],
+                message: message,
+            }),
+        );
+    }
+
+    logger(ctx: object, json: string): void {
+        const log = JSON.parse(json);
+        const date = new Date(parseInt(log.date)).toLocaleString();
+
+        const msg = `${date}, ${log.source}: ${log.message}`;
+        switch (log.level) {
+            case 0:
+                console.info(msg);
+                break;
+            case 1:
+                console.warn(msg);
+                break;
+            case 2:
+                console.error(msg);
+                break;
+            default:
+                console.log(msg);
+        }
     }
 
     downsync(event: string): void {
