@@ -32,7 +32,7 @@ copyright = '2024, Tensorware'
 
 # get version from python package
 version_ns = dict()
-with open(os.path.join(root, 'ipypandas', '_version.py')) as f:
+with open(os.path.join(root, 'ipypandas', 'version.py')) as f:
     exec(f.read(), version_ns)
 version = '%i.%i' % version_ns['version_info'][:2]
 release = version_ns['__version__']
@@ -112,11 +112,10 @@ nbsphinx_widgets_path = ''
 # only import and set the theme if we're building docs locally
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 if not on_rtd:
-    import sphinx_rtd_theme
-    html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+    html_theme = 'pydata_sphinx_theme'
+    html_logo = 'static/images/logo.png'
+    html_css_files = ['styles/theme.css']
 html_static_path = ['static']
-html_css_files = ['theme.css']
 htmlhelp_basename = 'ipypandasdoc'
 
 

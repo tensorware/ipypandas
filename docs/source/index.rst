@@ -26,24 +26,17 @@ Contents
    :maxdepth: 2
    :caption: Installation
 
-   install
-   introduction
+   installation/installation
+   installation/introduction
 
 .. toctree::
    :maxdepth: 2
-   :caption: Usage
+   :caption: Examples
 
-   examples/index
+   examples/examples
 
 .. toctree::
    :maxdepth: 2
    :caption: Development
 
-   development/index
-
-
-.. links
-
-.. _`Jupyter widgets`: https://jupyter.org/widgets.html
-
-.. _`notebook`: https://jupyter-notebook.readthedocs.io/en/latest/
+   development/development

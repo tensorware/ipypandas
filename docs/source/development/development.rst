@@ -1,5 +1,5 @@
 
-Development Installation
+Development
 =====================================
 
 To install a developer version of ipypandas, you will first need to clone
@@ -17,8 +17,3 @@ If you are planning on working on the JS/frontend code, you should also do
 a link installation of the extension::
 
     jupyter labextension develop --overwrite .
-
-
-.. links
-
-.. _`appropriate flag`: https://jupyter-notebook.readthedocs.io/en/stable/extending/frontend_extensions.html#installing-and-enabling-extensions

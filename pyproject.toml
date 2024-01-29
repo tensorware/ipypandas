@@ -54,7 +54,7 @@ docs = [
     "nbsphinx-link",
     "jupyter_sphinx",
     "pytest_check_links",
-    "sphinx_rtd_theme",
+    "pydata-sphinx-theme",
     "sphinx>=1.5",
 ]
 
@@ -100,7 +100,7 @@ field = [
 ]
 file = [
     { src = "pyproject.toml", version_template = "version = \"{major}.{minor}.{patch}{channel}{release}\"" },
-    { src = "ipypandas/_version.py" },
+    { src = "ipypandas/version.py" },
 ]
 
 [tool.tbump.version]

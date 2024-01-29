@@ -17,7 +17,7 @@ from traitlets import Instance, Unicode, Integer, observe
 from IPython.display import display
 from IPython.core.getipython import get_ipython
 
-from ._version import module_version, module_name, module_log
+from .version import module_version, module_name, module_log
 
 
 @register
@@ -140,7 +140,7 @@ class PandasWidget(DOMWidget):
 
     def search(self):
         search_args = self.search_query.split('&')
-        if len(search_args) == 0:
+        if len(search_args) == 0 or len(search_args[0]) == 0:
             return
 
         # convert to string columns
@@ -152,6 +152,7 @@ class PandasWidget(DOMWidget):
         # search dataframe by string contains
         query_args = dict(na=False, case=False, regex=True)
         for query in search_args:
+            self.log('info', f'search query = {query}')
             mask = df_str.apply(lambda row: row.str.contains(query.strip(), **query_args)).any(axis=1)
             self.df_copy = self.df_copy.loc[mask]
             df_str = df_str.loc[mask]
@@ -162,13 +163,6 @@ class PandasWidget(DOMWidget):
             return
 
         # TODO: generate filter arguments
-        filter_args = defaultdict(list)
-        for idx, col in state_cols['filter'].items():
-            pass
-
-        # filter dataframe
-        if filter_args:
-            pass
 
     def sort(self):
         state_cols = json.loads(self.state_cols)
@@ -178,8 +172,10 @@ class PandasWidget(DOMWidget):
         # generate sort arguments
         sort_args = defaultdict(list)
         for idx, value in state_cols['sort'].items():
-            sort_args['by'].append(self.df_copy.iloc[:, int(idx[5:])].name)
+            column = self.df_copy.iloc[:, int(idx[5:])].name
+            sort_args['by'].append(column)
             sort_args['ascending'].append(value == 'asc')
+            self.log('info', f'sort column = {column}')
 
         # sort dataframe
         if sort_args:
@@ -196,6 +192,7 @@ class PandasWidget(DOMWidget):
         if 'order' in state_cols:
             columns = [self.df_copy.iloc[:, int(idx[5:])].name for idx in state_cols['order']]
             self.styler_copy.data = self.styler_copy.data.reindex(columns, axis='columns')
+            self.log('info', f'order columns = {columns}')
 
         # global table styles
         self.styler_copy.cell_ids = False
