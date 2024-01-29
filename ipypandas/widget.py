@@ -41,9 +41,9 @@ class PandasWidget(DOMWidget):
     df = Instance(pd.DataFrame)
     df_copy = Instance(pd.DataFrame)
 
-    # layout
+    # styles
     styler = Instance(Styler)
-    view = Unicode('<div/>').tag(sync=True)
+    styler_copy = Instance(Styler)
 
     # options
     min_rows = Integer(0).tag(sync=True)
@@ -56,6 +56,7 @@ class PandasWidget(DOMWidget):
     n_cols = Integer(0).tag(sync=True)
     start_row = Integer(0).tag(sync=True)
     end_row = Integer(0).tag(sync=True)
+    view = Unicode('<div/>').tag(sync=True)
 
     # states
     state_rows = Unicode('{}').tag(sync=True)
@@ -102,8 +103,9 @@ class PandasWidget(DOMWidget):
         else:
             self.end_row = self.n_rows
 
-        # init internal dataframe
+        # init internal data
         self.df_copy = self.df.copy()
+        self.styler_copy = self.styler._copy(True)
 
         # init view by simulated client update
         self.downsync = f'init-{datetime.utcnow().timestamp() * 1000:.0f}'
@@ -114,8 +116,9 @@ class PandasWidget(DOMWidget):
     @observe('downsync')
     def update(self, change):
 
-        # copy original dataframe
+        # copy original data
         self.df_copy = self.df.copy()
+        self.styler_copy = self.styler._copy(True)
 
         # update dataframe
         self.search()
@@ -184,17 +187,18 @@ class PandasWidget(DOMWidget):
     def styles(self):
 
         # use sliced dataframe
-        self.styler.data = self.df_copy.iloc[self.start_row:self.end_row]
+        self.styler_copy.data = self.df_copy.iloc[self.start_row:self.end_row]
 
-        # use columns by sort order
+        # use ordered columns
         state_cols = json.loads(self.state_cols)
         if 'order' in state_cols:
             columns = [self.df_copy.iloc[:, int(idx[5:])].name for idx in state_cols['order']]
-            self.styler.data = self.styler.data.reindex(columns, axis='columns')
+            self.styler_copy.data = self.styler_copy.data.reindex(columns, axis='columns')
 
-        # table styles
-        self.styler.table_attributes = 'class="pd-table"'
-        self.styler.set_table_styles(css_class_names={
+        # global table styles
+        self.styler_copy.cell_ids = False
+        self.styler_copy.table_attributes = 'class="pd-table"'
+        self.styler_copy.set_table_styles(css_class_names={
             'level': 'pd-lvl-',
             'row': 'pd-row-',
             'col': 'pd-col-',
@@ -203,41 +207,64 @@ class PandasWidget(DOMWidget):
             'row_trim': 'pd-row-trim',
             'col_trim': 'pd-col-trim',
             'index_name': 'pd-index',
-            'data': 'pd-data',
-            'blank': 'pd-blank'
-        })
+            'blank': 'pd-blank',
+            'data': 'pd-data'
+        }, overwrite=False)
 
-        # column styles
+        # column table styles
         column_styles = {}
-        for col in self.styler.data.columns:
-            iloc = self.df_copy.columns.get_loc(col)
+        for col in self.styler_copy.data.columns:
+            iloc = self.df.columns.get_loc(col)
             column_styles[col] = [{'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')]}]
-        self.styler.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
+        self.styler_copy.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
 
+        # column format styles
         draggable = str(not isinstance(self.df_copy.columns, pd.MultiIndex)).lower()
         col_text = f'<span class="pd-col-text" draggable="{draggable}">{{0}}</span>'
         col_rescale_icon = '<span class="pd-col-i-rescale"><span></span></span>'
         col_filter_icon = '<span class="pd-col-i-filter"><span></span></span>'
         col_sort_icon = '<span class="pd-col-i-sort"><span></span></span>'
-        self.styler.format_index(lambda x: f'{col_rescale_icon}{col_sort_icon}{col_text}{col_filter_icon}'.format(x), axis=1)
+        col_format = f'{col_rescale_icon}{col_sort_icon}{col_text}{col_filter_icon}'
+        self.styler_copy.format_index(lambda x: col_format.format(x), axis=1)
 
-        # row styles
+        # row table styles
         row_styles = {}
-        for row in self.styler.data.index:
-            iloc = self.df_copy.index.get_loc(row)
+        for row in self.styler_copy.data.index:
+            iloc = self.df.index.get_loc(row)
             row_styles[row] = [{'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')]}]
-        self.styler.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
+        self.styler_copy.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
 
+        # row format styles
         row_text = '<span class="pd-row-text">{0}</span>'
-        self.styler.format_index(lambda x: f'{row_text}'.format(x), axis=0)
+        row_format = f'{row_text}'
+        self.styler_copy.format_index(lambda x: row_format.format(x), axis=0)
 
-        # content styles
-        self.styler.format(precision=self.precision)
+        return self.chain(self.styler_copy, self.styler)
 
-        # disable cell ids
-        self.styler.cell_ids = False
+    def chain(self, styler1, styler2):
+        def func(func1, func2):
+            return lambda x: func1(func2(str(x)))
+        styler = styler1._copy(True)
 
-        return self.styler
+        # default data format precision
+        if len(self.styler._display_funcs) == 0:
+            self.styler.format(precision=self.precision)
+
+        # chain index format functions
+        display_funcs_index = styler._display_funcs_index
+        for key in display_funcs_index.keys():
+            func1 = styler1._display_funcs_index[key]
+            func2 = styler2._display_funcs_index[key]
+            display_funcs_index[key] = func(func1, func2)
+
+        # chain columns format functions
+        display_funcs_columns = styler._display_funcs_columns
+        for key in display_funcs_columns.keys():
+            func1 = styler1._display_funcs_columns[key]
+            func2 = styler2._display_funcs_columns[key]
+            display_funcs_columns[key] = func(func1, func2)
+
+        return styler
 
     def __repr__(self):
         rows, cols = self.df_copy.shape

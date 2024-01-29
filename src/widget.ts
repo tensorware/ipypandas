@@ -137,11 +137,11 @@ export class PandasView extends DOMWidgetView {
 
         // scroll row position is used as center position
         const scroll_top = this.model.get('_scroll_top') || 0;
-        const scroll_row = this.clamp(this.round_to(scroll_top, row_height) / row_height, 0, n_rows);
+        const scroll_row = this.clamp_value(this.round_to(scroll_top, row_height) / row_height, 0, n_rows);
 
         // calculate start and end row
-        const start_row = !load_lazy ? 0 : this.clamp(scroll_row - margin_rows, 0, n_rows);
-        const end_row = !load_lazy ? n_rows : this.clamp(scroll_row + margin_rows, 0, n_rows);
+        const start_row = !load_lazy ? 0 : this.clamp_value(scroll_row - margin_rows, 0, n_rows);
+        const end_row = !load_lazy ? n_rows : this.clamp_value(scroll_row + margin_rows, 0, n_rows);
 
         return {
             start_row: start_row,
@@ -360,7 +360,8 @@ export class PandasView extends DOMWidgetView {
     }
 
     reset_data(): void {
-        const view = $(this.el).children('.pd-view');
+        const root = $(this.el);
+        const view = root.children('.pd-view');
 
         // reset view state
         this.model.set('_scroll_top', 0);
@@ -462,7 +463,9 @@ export class PandasView extends DOMWidgetView {
                 const col_head = target.closest('.pd-col-head');
                 if (col_head.length) {
                     this.on_rescale(col_head);
-                    if (target.closest('.pd-col-i-filter').length) {
+
+                    const col_filter = target.closest('.pd-col-i-filter');
+                    if (col_filter.length) {
                         if (!filter.length) {
                             root.append(this.get_filter(col_head));
                             col_head.addClass('pd-filter-active');
@@ -478,7 +481,7 @@ export class PandasView extends DOMWidgetView {
                 // row index clicked
                 const row_head = target.closest('.pd-row-head');
                 if (row_head.length) {
-                    if (this.on_select(row_head)) {
+                    if (this.on_select(row_head.parent().find('.pd-row-head'))) {
                         this.downsync('select');
                     }
                     return;
@@ -534,7 +537,8 @@ export class PandasView extends DOMWidgetView {
     }
 
     update_table(): void {
-        const view = $(this.el).children('.pd-view');
+        const root = $(this.el);
+        const view = root.children('.pd-view');
 
         const col_heads = view.find('.pd-col-head');
         const row_heads = view.find('.pd-row-head');
@@ -574,20 +578,30 @@ export class PandasView extends DOMWidgetView {
         }
 
         // set row index position
-        let offset = -1;
+        let offset_index = -1;
         view.find('th.pd-index').each((i: number, th: HTMLElement) => {
             const left = $(th).position().left;
-            offset = offset < 0 ? left : offset;
-            $(th).css({ left: `${left - offset}px` });
+            offset_index = offset_index < 0 ? left : offset_index;
+            $(th).css({ left: `${left - offset_index}px` });
         });
+        let offset_row = -1;
         view.find('th.pd-row-head').each((i: number, th: HTMLElement) => {
             const left = $(th).position().left;
-            $(th).css({ left: `${left}px` });
+            offset_row = offset_row < 0 ? left : offset_row;
+            $(th).css({ left: `${left - offset_row}px` });
         });
+
+        // update colors
+        const select_color = root.css('--pd-body-tr-select-color');
+        if (select_color && select_color.includes('rgba')) {
+            const bg_color = this.hex_to_rgb(root.css('--pd-header-color'));
+            root.css({ '--pd-body-tr-select-color': this.rgba_to_rgb(select_color, bg_color) });
+        }
     }
 
     update_view(): void {
-        const view = $(this.el).children('.pd-view');
+        const root = $(this.el);
+        const view = root.children('.pd-view');
 
         // set scroll position
         view.scrollTop(this.model.get('_scroll_top'));
@@ -598,8 +612,9 @@ export class PandasView extends DOMWidgetView {
     }
 
     update_footer(): void {
-        const footer = $(this.el).children('.pd-footer');
-        const view = $(this.el).children('.pd-view');
+        const root = $(this.el);
+        const footer = root.children('.pd-footer');
+        const view = root.children('.pd-view');
         const table = view.children('.pd-table');
 
         // set maximum width
@@ -633,12 +648,32 @@ export class PandasView extends DOMWidgetView {
         return result.split('-').pop() || '';
     }
 
-    round_to(value: number, multiple: number): number {
-        return multiple * Math.round(value / multiple);
+    rgba_to_rgb(fgrgba: string, bgrgb: string): string {
+        const [fgr, fgg, fgb, fga] = $.map(fgrgba.substring(fgrgba.indexOf('(') + 1, fgrgba.lastIndexOf(')')).split(/,\s*/), Number);
+        const [bgr, bgg, bgb] = $.map(bgrgb.substring(bgrgb.indexOf('(') + 1, bgrgb.lastIndexOf(')')).split(/,\s*/), Number);
+        const fgrgb = {
+            r: Math.round((fga * (fgr / 255) + (1 - fga) * (bgr / 255)) * 255),
+            g: Math.round((fga * (fgg / 255) + (1 - fga) * (bgg / 255)) * 255),
+            b: Math.round((fga * (fgb / 255) + (1 - fga) * (bgb / 255)) * 255),
+        };
+        return `rgb(${fgrgb.r}, ${fgrgb.g}, ${fgrgb.b})`;
     }
 
-    clamp(value: number, min: number, max: number): number {
+    hex_to_rgb(hex: string): string {
+        if (!hex.includes('#')) {
+            return hex;
+        }
+        const str = hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => '#' + r + r + g + g + b + b);
+        const [r, g, b] = (str.substring(1).match(/.{2}/g) || []).map((x) => parseInt(x, 16));
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    clamp_value(value: number, min: number, max: number): number {
         return Math.min(Math.max(value, min), max);
+    }
+
+    round_to(value: number, multiple: number): number {
+        return multiple * Math.round(value / multiple);
     }
 
     downsync(event: string): void {
