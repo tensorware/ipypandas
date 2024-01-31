@@ -217,7 +217,7 @@
                     height: var(--pd-body-padding-bottom);
                 }
 
-                th.pd-row-head:not([rowspan]) {
+                th.pd-row-head {
                     left: 0;
                     z-index: 1;
                     position: sticky;
@@ -229,17 +229,19 @@
                         white-space: nowrap;
                     }
 
-                    &.pd-select-active {
-                        background-color: var(--pd-body-tr-select-color);
-
-                        & ~ td.pd-data {
+                    &:not([rowspan]) {
+                        &.pd-select-active {
                             background-color: var(--pd-body-tr-select-color);
-                        }
-                    }
 
-                    &:hover {
-                        background-color: var(--pd-body-tr-select-color);
-                        cursor: pointer;
+                            & ~ td.pd-data {
+                                background-color: var(--pd-body-tr-select-color);
+                            }
+                        }
+
+                        &:hover {
+                            background-color: var(--pd-body-tr-select-color);
+                            cursor: pointer;
+                        }
                     }
                 }
 
