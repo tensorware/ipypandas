@@ -99,10 +99,7 @@ class PandasWidget(DOMWidget):
 
         # init viewport
         self.start_row = 0
-        if self.max_rows and self.n_rows > self.max_rows:
-            self.end_row = min(self.n_rows, 1000)
-        else:
-            self.end_row = self.n_rows
+        self.end_row = min(self.n_rows, 1000) if self.max_rows and self.n_rows > self.max_rows else self.n_rows
 
         # init internal data
         self.df_copy = self.df.copy()
@@ -122,23 +119,42 @@ class PandasWidget(DOMWidget):
         self.df_copy = self.df.copy()
         self.styler_copy = self.styler._copy(True)
 
-        # update dataframe
-        self.search()
-        self.filter()
-        self.sort()
-
         # reset viewport on dimensions change
         viewport_changed = self.n_rows != self.df_copy.shape[0] or self.n_cols != self.df_copy.shape[1]
         if viewport_changed:
-            self.n_rows = self.df_copy.shape[0]
-            self.n_cols = self.df_copy.shape[1]
+            self.n_rows, self.n_cols = self.df_copy.shape
             self.upsync = f'reset-{datetime.now().timestamp() * 1000:.0f}'
             return
 
+        # update view data
+        self.filter()
+        self.search()
+        self.sort()
+        self.order()
+
         # update view representation
+        self.n_rows, self.n_cols = self.df_copy.shape
+        self.df_copy = self.df_copy.iloc[self.start_row:self.end_row]
+        self.styler_copy.data = self.df_copy
         self.view = self.styles().to_html()
 
+    def filter(self):
+
+        # drop hidden rows
+        index = [self.df.iloc[iloc,:].name for iloc in self.styler_copy.hidden_rows]
+        self.df_copy.drop(index=index, inplace=True)
+        self.styler_copy.hidden_rows = []
+
+        # use filtered rows
+        state_cols = json.loads(self.state_cols)
+        if 'filter' not in state_cols:
+            return
+
+        # TODO: generate filter arguments
+
     def search(self):
+
+        # build search query
         search_args = self.search_query.split('&')
         if len(search_args) == 0 or len(search_args[0]) == 0:
             return
@@ -149,7 +165,7 @@ class PandasWidget(DOMWidget):
             self.df_copy = self.df_copy.head(0)
             return
 
-        # search dataframe by string contains
+        # search data by string contains
         query_args = dict(na=False, case=False, regex=True)
         for query in search_args:
             self.log('info', f'search query = {query}')
@@ -157,14 +173,9 @@ class PandasWidget(DOMWidget):
             self.df_copy = self.df_copy.loc[mask]
             df_str = df_str.loc[mask]
 
-    def filter(self):
-        state_cols = json.loads(self.state_cols)
-        if 'filter' not in state_cols:
-            return
-
-        # TODO: generate filter arguments
-
     def sort(self):
+
+        # use sorted rows
         state_cols = json.loads(self.state_cols)
         if 'sort' not in state_cols:
             return
@@ -172,49 +183,54 @@ class PandasWidget(DOMWidget):
         # generate sort arguments
         sort_args = defaultdict(list)
         for idx, value in state_cols['sort'].items():
-            column = self.df_copy.iloc[:, int(idx[5:])].name
+            column = self.df_copy.iloc[:,int(idx[5:])].name
             sort_args['by'].append(column)
             sort_args['ascending'].append(value == 'asc')
             self.log('info', f'sort column = {column}')
 
-        # sort dataframe
+        # sort data
         if sort_args:
             sort_args['inplace'] = True
             self.df_copy.sort_values(**sort_args)
 
-    def styles(self):
+    def order(self):
 
-        # use sliced dataframe
-        self.styler_copy.data = self.df_copy.iloc[self.start_row:self.end_row]
+        # drop hidden columns
+        columns = [self.df.iloc[:,iloc].name for iloc in self.styler_copy.hidden_columns]
+        self.df_copy.drop(columns=columns, inplace=True)
+        self.styler_copy.hidden_columns = []
 
         # use ordered columns
         state_cols = json.loads(self.state_cols)
         if 'order' in state_cols:
-            columns = [self.df_copy.iloc[:, int(idx[5:])].name for idx in state_cols['order']]
-            self.styler_copy.data = self.styler_copy.data.reindex(columns, axis='columns')
+            columns = [self.df.iloc[:,int(idx[5:])].name for idx in state_cols['order']]
+            self.df_copy = self.df_copy.reindex(columns=columns)
             self.log('info', f'order columns = {columns}')
+
+    def styles(self):
 
         # global table styles
         self.styler_copy.cell_ids = False
         self.styler_copy.table_attributes = 'class="pd-table"'
         self.styler_copy.set_table_styles(css_class_names={
-            'level': 'pd-lvl-',
             'row': 'pd-row-',
             'col': 'pd-col-',
+            'level': 'pd-lvl-',
+            'index_name': 'pd-index',
             'row_heading': 'pd-row-head',
             'col_heading': 'pd-col-head',
             'row_trim': 'pd-row-trim',
             'col_trim': 'pd-col-trim',
-            'index_name': 'pd-index',
             'blank': 'pd-blank',
-            'data': 'pd-data'
+            'data': 'pd-data',
+            'foot': 'pd-foot'
         }, overwrite=False)
 
         # column table styles
         column_styles = {}
-        for col in self.styler_copy.data.columns:
+        for col in self.df_copy.columns:
             iloc = self.df.columns.get_loc(col)
-            column_styles[col] = [{'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')]}]
+            column_styles[col] = [{ 'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')] }]
         self.styler_copy.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
 
         # column format styles
@@ -228,9 +244,9 @@ class PandasWidget(DOMWidget):
 
         # row table styles
         row_styles = {}
-        for row in self.styler_copy.data.index:
+        for row in self.df_copy.index:
             iloc = self.df.index.get_loc(row)
-            row_styles[row] = [{'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')]}]
+            row_styles[row] = [{ 'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')] }]
         self.styler_copy.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
 
         # row format styles
@@ -245,10 +261,6 @@ class PandasWidget(DOMWidget):
             return lambda x: func1(func2(str(x)))
         styler = styler1._copy(True)
 
-        # default data format precision
-        if len(self.styler._display_funcs) == 0:
-            self.styler.format(precision=self.precision)
-
         # chain index format functions
         display_funcs_index = styler._display_funcs_index
         for key in display_funcs_index.keys():
@@ -262,6 +274,10 @@ class PandasWidget(DOMWidget):
             func1 = styler1._display_funcs_columns[key]
             func2 = styler2._display_funcs_columns[key]
             display_funcs_columns[key] = func(func1, func2)
+
+        # default data format precision
+        if len(styler._display_funcs) == 0:
+            styler.format(precision=self.precision)
 
         return styler
 
@@ -279,8 +295,8 @@ class PandasWidget(DOMWidget):
         })
 
     def __repr__(self):
-        rows, cols = self.df_copy.shape
-        return f'{type(self)}, {rows} rows × {cols} columns'
+        n_rows, n_cols = self.df_copy.shape
+        return f'{type(self)}, {n_rows} rows × {n_cols} columns'
 
 
 def formatter():
