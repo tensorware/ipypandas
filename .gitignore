@@ -38,17 +38,18 @@ src/styles/*.css
 ipypandas/labextension
 
 # Tests
+test_*.ipynb
 htmlcov/
 .tox/
 .coverage
 .coverage.*
 .cache
 .pytest_cache
+.hypothesis/
 nosetests.xml
 coverage.xml
 **/coverage/
 *,cover
-.hypothesis/
 
 # Documentation
 docs/build/
