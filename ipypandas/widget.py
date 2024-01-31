@@ -119,23 +119,26 @@ class PandasWidget(DOMWidget):
         self.df_copy = self.df.copy()
         self.styler_copy = self.styler._copy(True)
 
-        # reset viewport on dimensions change
-        viewport_changed = self.n_rows != self.df_copy.shape[0] or self.n_cols != self.df_copy.shape[1]
-        if viewport_changed:
+        # reset viewport dimensions
+        if self.df_copy.shape != (self.n_rows, self.n_cols):
             self.n_rows, self.n_cols = self.df_copy.shape
             self.upsync = f'reset-{datetime.now().timestamp() * 1000:.0f}'
             return
 
-        # update view data
+        # update data
         self.filter()
         self.search()
         self.sort()
         self.order()
 
-        # update view representation
+        # update viewport data
         self.n_rows, self.n_cols = self.df_copy.shape
         self.df_copy = self.df_copy.iloc[self.start_row:self.end_row]
+
+        # update viewport representation
         self.styler_copy.data = self.df_copy
+        self.styler_copy.index = self.df_copy.index
+        self.styler_copy.columns = self.df_copy.columns
         self.view = self.styles().to_html()
 
     def filter(self):
@@ -261,22 +264,31 @@ class PandasWidget(DOMWidget):
             return lambda x: func1(func2(str(x)))
         styler = styler1._copy(True)
 
-        # chain index format functions
-        display_funcs_index = styler._display_funcs_index
-        for key in display_funcs_index.keys():
-            func1 = styler1._display_funcs_index[key]
-            func2 = styler2._display_funcs_index[key]
-            display_funcs_index[key] = func(func1, func2)
+        # chain column labels format functions, maps (level, col)
+        ckeys = list(styler._display_funcs_columns.keys())
+        clocs1 = styler.columns.get_indexer_for(styler2.columns)
+        clocs2 = styler.columns.get_indexer_for(styler1.columns)
+        for cloc1, cloc2 in zip(clocs1, clocs2):
+            cfunc1 = styler1._display_funcs_columns[ckeys[cloc1]]
+            cfunc2 = styler2._display_funcs_columns[ckeys[cloc2]]
+            styler._display_funcs_columns[ckeys[cloc1]] = func(cfunc1, cfunc2)
 
-        # chain columns format functions
-        display_funcs_columns = styler._display_funcs_columns
-        for key in display_funcs_columns.keys():
-            func1 = styler1._display_funcs_columns[key]
-            func2 = styler2._display_funcs_columns[key]
-            display_funcs_columns[key] = func(func1, func2)
+        # chain row labels format functions, maps (row, level)
+        rkeys = list(styler._display_funcs_index.keys())
+        rlocs1 = styler.index.get_indexer_for(styler2.index)
+        rlocs2 = styler.index.get_indexer_for(styler1.index)
+        for rloc1, rloc2 in zip(rlocs1, rlocs2):
+            rfunc1 = styler1._display_funcs_index[rkeys[rloc1]]
+            rfunc2 = styler2._display_funcs_index[rkeys[rloc2]]
+            styler._display_funcs_index[rkeys[rloc1]] = func(rfunc1, rfunc2)
 
-        # default data format precision
-        if len(styler._display_funcs) == 0:
+        # swap data labels format functions, maps (row, col)
+        if len(styler._display_funcs) > 0:
+            for rloc1, rloc2 in zip(rlocs1, rlocs2):
+                for cloc1, cloc2 in zip(clocs1, clocs2):
+                    rcfunc2 = styler2._display_funcs[(rloc2, cloc2)]
+                    styler._display_funcs[(rloc1, cloc1)] = rcfunc2
+        else:
             styler.format(precision=self.precision)
 
         return styler

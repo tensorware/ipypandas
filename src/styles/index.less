@@ -56,7 +56,7 @@
                 background-color: var(--pd-header-color);
                 box-shadow: 0 var(--pd-border-width) var(--pd-border-color);
 
-                th.pd-col-head {
+                th.pd-col-head:not([colspan]) {
                     white-space: nowrap;
 
                     .pd-col-text {
@@ -217,7 +217,7 @@
                     height: var(--pd-body-padding-bottom);
                 }
 
-                th.pd-row-head {
+                th.pd-row-head:not([rowspan]) {
                     left: 0;
                     z-index: 1;
                     position: sticky;
@@ -245,7 +245,13 @@
 
                 tr:hover {
                     th {
-                        background-color: var(--pd-body-tr-select-color);
+                        &[rowspan] {
+                            background-color: var(--pd-header-color);
+                        }
+
+                        &:not([rowspan]) {
+                            background-color: var(--pd-body-tr-select-color);
+                        }
                     }
                 }
             }

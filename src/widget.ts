@@ -465,7 +465,7 @@ export class PandasView extends DOMWidgetView {
                 root.find('.pd-col-head').removeClass('pd-filter-active');
 
                 // column header clicked
-                const col_head = target.closest('.pd-col-head');
+                const col_head = target.closest('.pd-col-head:not([colspan])');
                 if (col_head.length) {
                     this.on_rescale(col_head);
 
@@ -484,7 +484,7 @@ export class PandasView extends DOMWidgetView {
                 }
 
                 // row index clicked
-                const row_head = target.closest('.pd-row-head');
+                const row_head = target.closest('.pd-row-head:not([rowspan])');
                 if (row_head.length) {
                     if (this.on_select(row_head.parent().find('.pd-row-head'))) {
                         this.downsync('select');
@@ -597,6 +597,10 @@ export class PandasView extends DOMWidgetView {
         });
 
         // update colors
+        const head_color = col_heads.css('background-color');
+        if (head_color && !head_color.includes('rgba(0, 0, 0, 0)')) {
+            root.css({ '--pd-header-color': head_color });
+        }
         const select_color = root.css('--pd-body-tr-select-color');
         if (select_color && select_color.includes('rgba')) {
             const bg_color = this.hex_to_rgb(root.css('--pd-header-color'));
