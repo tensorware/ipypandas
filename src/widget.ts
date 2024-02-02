@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
-import { MODULE_VERSION, MODULE_NAME, MODULE_LOG } from './version';
+import { MODULE_VERSION, MODULE_NAME } from './version';
 
 import $ from 'jquery';
 import '../src/styles/index.css';
@@ -50,9 +50,20 @@ export class PandasView extends DOMWidgetView {
         this.update_data();
 
         // register change events
-        this.model.on('change:upsync', this.reset_data, this);
+        this.model.on('change:log_msg', this.log_msg, this);
+        this.model.on('change:sync_up', this.reset_data, this);
         this.model.on('change:view', this.update_data, this);
-        this.model.on('change:logger', this.logger, this);
+    }
+
+    sync_down(event: string): void {
+        const root = $(this.el);
+
+        // show sync indicator
+        root.css({ '--pd-root-cursor': 'wait' });
+
+        // sync model with backend
+        this.model.set('sync_down', `${event}-${Date.now()}`);
+        this.touch();
     }
 
     get_view(): JQuery<HTMLElement> {
@@ -392,7 +403,7 @@ export class PandasView extends DOMWidgetView {
         this.set_height(view);
 
         // send model to backend
-        this.downsync('reset');
+        this.sync_down('reset');
     }
 
     update_data(): void {
@@ -456,7 +467,7 @@ export class PandasView extends DOMWidgetView {
                 // reorder columns
                 $(dragged).insertAfter(dropped);
                 if (this.on_reorder(view)) {
-                    this.downsync('reorder');
+                    this.sync_down('reorder');
                 }
             });
             view.on('dragend', (e: JQuery.DragEndEvent) => {
@@ -472,7 +483,7 @@ export class PandasView extends DOMWidgetView {
 
                     // vertical or horizontal scrolling
                     if (this.on_scroll(target)) {
-                        this.downsync('scroll');
+                        this.sync_down('scroll');
                     }
                 });
             });
@@ -496,7 +507,7 @@ export class PandasView extends DOMWidgetView {
                         }
                     } else {
                         if (this.on_sort(col_head)) {
-                            this.downsync('sort');
+                            this.sync_down('sort');
                         }
                     }
                     return;
@@ -506,7 +517,7 @@ export class PandasView extends DOMWidgetView {
                 const row_head = target.closest('.pd-row-head:not([rowspan])');
                 if (row_head.length) {
                     if (this.on_select(row_head.parent().find('.pd-row-head'))) {
-                        this.downsync('select');
+                        this.sync_down('select');
                     }
                     return;
                 }
@@ -514,7 +525,7 @@ export class PandasView extends DOMWidgetView {
                 // resize handler clicked
                 if (target.is('.pd-view')) {
                     if (this.on_resize(target)) {
-                        this.downsync('resize');
+                        this.sync_down('resize');
                     }
                     return;
                 }
@@ -553,7 +564,7 @@ export class PandasView extends DOMWidgetView {
                 const search = target.closest('.pd-search');
                 if (search.length) {
                     if (this.on_search(target) && enter) {
-                        this.downsync('search');
+                        this.sync_down('search');
                     }
                 }
             });
@@ -712,12 +723,12 @@ export class PandasView extends DOMWidgetView {
 
     log(level: string, message: string): void {
         const levels: { [key: string]: any } = { debug: 0, info: 1, warn: 2, error: 3 };
-        if (!(levels[level] >= levels[MODULE_LOG])) {
+        if (!(levels[level] >= levels[this.model.get('log_level')])) {
             return;
         }
 
         // send log message to console
-        this.logger(
+        this.log_msg(
             this,
             JSON.stringify({
                 date: `${Date.now()}`,
@@ -728,7 +739,7 @@ export class PandasView extends DOMWidgetView {
         );
     }
 
-    logger(ctx: object, json: string): void {
+    log_msg(ctx: object, json: string): void {
         const log = JSON.parse(json);
         const date = new Date(parseInt(log.date)).toLocaleString();
 
@@ -749,16 +760,5 @@ export class PandasView extends DOMWidgetView {
             default:
                 console.log(msg);
         }
-    }
-
-    downsync(event: string): void {
-        const root = $(this.el);
-
-        // show sync indicator
-        root.css({ '--pd-root-cursor': 'wait' });
-
-        // sync model with backend
-        this.model.set('downsync', `${event}-${Date.now()}`);
-        this.touch();
     }
 }

@@ -18,7 +18,7 @@ from traitlets import Instance, Unicode, Integer, observe
 from IPython.display import display
 from IPython.core.getipython import get_ipython
 
-from .version import module_version, module_name, module_log
+from .version import module_version, module_name
 
 
 @register
@@ -34,10 +34,13 @@ class PandasWidget(DOMWidget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
+    # logging
+    log_msg = Unicode('{}').tag(sync=True)
+    log_level = Unicode('warn').tag(sync=True)
+
     # sync flags between client and server
-    upsync = Unicode('').tag(sync=True)
-    downsync = Unicode('').tag(sync=True)
-    logger = Unicode('{}').tag(sync=True)
+    sync_up = Unicode('').tag(sync=True)
+    sync_down = Unicode('').tag(sync=True)
 
     # data
     df = Instance(pd.DataFrame)
@@ -106,22 +109,22 @@ class PandasWidget(DOMWidget):
         self.end_row = min(self.n_rows, 500) if self.max_rows > 0 and self.n_rows > self.max_rows else self.n_rows
 
         # init view by simulated client update
-        self.downsync = f'init-{datetime.now().timestamp() * 1000:.0f}'
+        self.sync_down = f'init-{datetime.now().timestamp() * 1000:.0f}'
 
         # init pandas widget
         super(PandasWidget, self).__init__(**kwargs)
 
     @staticmethod
     def timeit(func):
-        def wrap(*args, **kwargs):
+        def wrapper(*args, **kwargs):
             start = time()
             result = func(*args, **kwargs)
             end = time()
             args[0].log('debug', f'{func.__name__} executed in {(end - start) * 1000:.2f} ms')
             return result
-        return wrap if module_log == 'debug' else func
+        return wrapper
 
-    @observe('downsync')
+    @observe('sync_down')
     def update(self, change):
         self.log('info', '------------ host update ------------')
         event = change.new.split('-')[0]
@@ -142,7 +145,7 @@ class PandasWidget(DOMWidget):
 
         # reset viewport dimensions
         if event in ['search']:
-            self.upsync = f'reset-{datetime.now().timestamp() * 1000:.0f}'
+            self.sync_up = f'reset-{datetime.now().timestamp() * 1000:.0f}'
             return
 
         # update viewport representation
@@ -271,7 +274,7 @@ class PandasWidget(DOMWidget):
     @timeit
     def chain(self, styler1, styler2):
         def func(func1, func2):
-            return lambda x: func1(func2(str(x)))
+            return lambda x: func1(func2(x))
 
         # chain column labels format functions, maps (level, col)
         ckeys = list(styler1._display_funcs_columns.keys())
@@ -302,11 +305,11 @@ class PandasWidget(DOMWidget):
 
     def log(self, level, message):
         levels = { 'debug': 0, 'info': 1, 'warn': 2, 'error': 3 }
-        if not (levels[level] >= levels[module_log]):
+        if not (levels[level] >= levels[self.log_level]):
             return
 
         # send log message to client
-        self.logger = json.dumps({
+        self.log_msg = json.dumps({
             'date': f'{datetime.now().timestamp() * 1000:.0f}',
             'source': 'ipypandas, widget.py',
             'level': levels[level],

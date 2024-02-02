@@ -9,4 +9,3 @@ __version__ = '.'.join(map(str, version_info))
 
 module_version = f'^{__version__}'
 module_name = 'ipypandas'
-module_log = 'debug'
