@@ -32,6 +32,8 @@ export class PandasModel extends DOMWidgetModel {
             _scroll_top: 0,
             _scroll_left: 0,
             _view_height: 0,
+            _head_height: 0,
+            _row_height: 0,
         };
     }
 }
@@ -94,6 +96,7 @@ export class PandasView extends DOMWidgetView {
             search.append(input);
             footer.append(search);
         }
+        this.log('info', `using ${n_rows} rows and ${n_cols} columns`);
 
         return footer;
     }
@@ -124,13 +127,11 @@ export class PandasView extends DOMWidgetView {
         return filter;
     }
 
-    get_range(view: JQuery<HTMLElement>, scale: number): any {
-        const body = view.find('.pd-table > tbody');
-        const row_height = body.find('tr:first').outerHeight() || 10;
-
+    get_range(scale: number): any {
         const n_rows = this.model.get('n_rows');
         const max_rows = this.model.get('max_rows');
-        const load_lazy = max_rows && n_rows > max_rows;
+        const row_height = this.model.get('_row_height');
+        const load_lazy = max_rows > 0 && n_rows > max_rows;
 
         // screen height is used as maximum viewport size
         const window_rows = this.round_to(window.screen.height, row_height) / row_height;
@@ -145,21 +146,31 @@ export class PandasView extends DOMWidgetView {
         const end_row = !load_lazy ? n_rows : this.clamp_value(scroll_row + margin_rows, 0, n_rows);
 
         return {
-            start_row: start_row,
-            end_row: end_row,
+            start_row: start_row || 0,
+            end_row: end_row || 0,
         };
     }
 
     set_range(view: JQuery<HTMLElement>): void {
+        const head = view.find('.pd-table > thead');
         const body = view.find('.pd-table > tbody');
-        const row_height = body.find('tr:first').outerHeight() || 0;
 
-        // get viewport range
-        const { start_row, end_row } = this.get_range(view, 2);
+        // set header height
+        const head_height = head.outerHeight() || -1;
+        if (head_height >= 0) {
+            this.model.set('_head_height', head_height);
+        }
+
+        // set row height
+        const row_height = body.find('tr:first').outerHeight() || -1;
+        if (row_height >= 0) {
+            this.model.set('_row_height', row_height);
+        }
 
         // set viewport padding
-        const padding_top = start_row * row_height;
-        const padding_bottom = (this.model.get('n_rows') - end_row) * row_height;
+        const { start_row, end_row } = this.get_range(4);
+        const padding_top = start_row * this.model.get('_row_height');
+        const padding_bottom = (this.model.get('n_rows') - end_row) * this.model.get('_row_height');
         body.css({
             '--pd-body-padding-top': `${padding_top}px`,
             '--pd-body-padding-bottom': `${padding_bottom}px`,
@@ -167,24 +178,20 @@ export class PandasView extends DOMWidgetView {
         });
 
         // set model range
+        this.log('info', `set range from ${start_row} to ${end_row} (${end_row - start_row} rows)`);
         this.model.set('start_row', start_row);
         this.model.set('end_row', end_row);
     }
 
     set_height(view: JQuery<HTMLElement>): void {
-        const head = view.find('.pd-table > thead');
-        const body = view.find('.pd-table > tbody');
-        const header_height = head.outerHeight() || 0;
-        const row_height = body.find('tr:first').outerHeight() || 0;
-
         const n_rows = this.model.get('n_rows');
         const min_rows = this.model.get('min_rows');
         const max_rows = this.model.get('max_rows');
-        const load_lazy = max_rows && n_rows > max_rows;
+        const load_lazy = max_rows > 0 && n_rows > max_rows;
 
         // calculate height ranges
         let max_height = view.find('.pd-table').outerHeight() || 0;
-        let min_height = Math.min(max_height, header_height + min_rows * row_height);
+        let min_height = Math.min(max_height, this.model.get('_head_height') + min_rows * this.model.get('_row_height'));
         const resize = min_height === max_height ? 'none' : 'vertical';
 
         // set viewport height
@@ -204,28 +211,37 @@ export class PandasView extends DOMWidgetView {
         });
 
         // set model height
+        let height = view.height();
         if (!this.model.get('_view_height')) {
-            this.model.set('_view_height', load_lazy ? min_height : max_height);
-        } else {
-            this.model.set('_view_height', view.height());
+            height = load_lazy ? min_height : max_height;
         }
+        this.log('info', `set view height to ${height} px`);
+        this.model.set('_view_height', height);
     }
 
     on_scroll(view: JQuery<HTMLElement>): boolean {
         const n_rows = this.model.get('n_rows');
         const max_rows = this.model.get('max_rows');
-        const load_lazy = max_rows && n_rows > max_rows;
+        const load_lazy = max_rows > 0 && n_rows > max_rows;
 
-        // set model scroll
-        this.model.set('_scroll_top', view.scrollTop() || 0);
-        this.model.set('_scroll_left', view.scrollLeft() || 0);
+        // set scroll top
+        const scroll_top = view.scrollTop() || -1;
+        if (scroll_top >= 0) {
+            this.model.set('_scroll_top', scroll_top);
+        }
 
-        // calculate center position
-        const { start_row, end_row } = this.get_range(view, 1);
+        // set scroll left
+        const scroll_left = view.scrollLeft() || -1;
+        if (scroll_left >= 0) {
+            this.model.set('_scroll_left', scroll_left);
+        }
+
+        // compare viewport
+        const { start_row, end_row } = this.get_range(1);
         const prev_start_row = this.model.get('start_row');
         const prev_end_row = this.model.get('end_row');
 
-        // update center and set range
+        // update range
         const update_range = start_row < prev_start_row || prev_end_row < end_row;
         if (update_range && load_lazy) {
             this.set_range(view);
@@ -380,12 +396,13 @@ export class PandasView extends DOMWidgetView {
     }
 
     update_data(): void {
-        const root = $(this.el);
+        this.log('info', '----------- client update -----------');
 
         // hide root
+        const root = $(this.el);
         root.css({
             '--pd-root-opacity': '0',
-            '--pd-root-cursor': 'progress',
+            '--pd-root-cursor': 'wait',
             '--pd-root-min-height': `${root.height() || 0}px`,
         });
         root.empty();
@@ -446,16 +463,18 @@ export class PandasView extends DOMWidgetView {
                 view.find('.pd-col-head').removeClass('pd-dragover');
             });
             view.on('scroll', (e: JQuery.ScrollEvent) => {
-                const target = $(e.target);
+                this.compress('scroll', () => {
+                    const target = $(e.target);
 
-                // remove open filter
-                root.find('.pd-filter').remove();
-                root.find('.pd-col-head').removeClass('pd-filter-active');
+                    // remove open filter
+                    root.find('.pd-filter').remove();
+                    root.find('.pd-col-head').removeClass('pd-filter-active');
 
-                // vertical or horizontal scrolling
-                if (this.on_scroll(target)) {
-                    this.downsync('scroll');
-                }
+                    // vertical or horizontal scrolling
+                    if (this.on_scroll(target)) {
+                        this.downsync('scroll');
+                    }
+                });
             });
             view.on('click', (e: JQuery.ClickEvent) => {
                 const target = $(e.target);
@@ -618,7 +637,6 @@ export class PandasView extends DOMWidgetView {
 
         // set height
         view.css({ '--pd-view-height': `${this.model.get('_view_height')}px` });
-        this.log('info', 'update view');
     }
 
     update_footer(): void {
@@ -686,8 +704,14 @@ export class PandasView extends DOMWidgetView {
         return multiple * Math.round(value / multiple);
     }
 
+    compress(event: string, handler: TimerHandler, delay = 200): void {
+        const timers = this.compress as any;
+        clearTimeout(timers[event] || -1);
+        timers[event] = setTimeout(handler, delay);
+    }
+
     log(level: string, message: string): void {
-        const levels: { [key: string]: any } = { info: 0, warn: 1, error: 2 };
+        const levels: { [key: string]: any } = { debug: 0, info: 1, warn: 2, error: 3 };
         if (!(levels[level] >= levels[MODULE_LOG])) {
             return;
         }
@@ -711,12 +735,15 @@ export class PandasView extends DOMWidgetView {
         const msg = `${date}, ${log.source}: ${log.message}`;
         switch (log.level) {
             case 0:
-                console.info(msg);
+                console.debug(msg);
                 break;
             case 1:
-                console.warn(msg);
+                console.info(msg);
                 break;
             case 2:
+                console.warn(msg);
+                break;
+            case 3:
                 console.error(msg);
                 break;
             default:
@@ -727,8 +754,8 @@ export class PandasView extends DOMWidgetView {
     downsync(event: string): void {
         const root = $(this.el);
 
-        // show progress
-        root.css({ '--pd-root-cursor': 'progress' });
+        // show sync indicator
+        root.css({ '--pd-root-cursor': 'wait' });
 
         // sync model with backend
         this.model.set('downsync', `${event}-${Date.now()}`);

@@ -7,6 +7,7 @@
 import json
 import pandas as pd
 
+from time import time
 from datetime import datetime
 from collections import defaultdict
 from pandas.io.formats.style import Styler
@@ -38,7 +39,7 @@ class PandasWidget(DOMWidget):
     downsync = Unicode('').tag(sync=True)
     logger = Unicode('{}').tag(sync=True)
 
-    # dataframe
+    # data
     df = Instance(pd.DataFrame)
     df_copy = Instance(pd.DataFrame)
 
@@ -66,16 +67,19 @@ class PandasWidget(DOMWidget):
 
     def __init__(self, **kwargs):
 
-        # init from dataframe or styler
+        # init empty data and styler
+        self.df = pd.DataFrame()
+        self.styler = Styler(self.df)
+        self.df_copy = pd.DataFrame()
+        self.styler_copy = Styler(self.df_copy)
+
+        # init existing data and styler
         if 'df' in kwargs:
             self.df = kwargs['df']
             self.styler = Styler(self.df)
         elif 'styler' in kwargs:
             self.df = kwargs['styler'].data
             self.styler = kwargs['styler']
-        else:
-            self.df = pd.DataFrame()
-            self.styler = Styler(self.df)
 
         # init min rows
         if 'min_rows' not in kwargs:
@@ -99,11 +103,7 @@ class PandasWidget(DOMWidget):
 
         # init viewport
         self.start_row = 0
-        self.end_row = min(self.n_rows, 1000) if self.max_rows and self.n_rows > self.max_rows else self.n_rows
-
-        # init internal data
-        self.df_copy = self.df.copy()
-        self.styler_copy = self.styler._copy(True)
+        self.end_row = min(self.n_rows, 500) if self.max_rows > 0 and self.n_rows > self.max_rows else self.n_rows
 
         # init view by simulated client update
         self.downsync = f'init-{datetime.now().timestamp() * 1000:.0f}'
@@ -111,19 +111,24 @@ class PandasWidget(DOMWidget):
         # init pandas widget
         super(PandasWidget, self).__init__(**kwargs)
 
+    @staticmethod
+    def timeit(func):
+        def wrap(*args, **kwargs):
+            start = time()
+            result = func(*args, **kwargs)
+            end = time()
+            args[0].log('debug', f'{func.__name__} executed in {(end - start) * 1000:.2f} ms')
+            return result
+        return wrap if module_log == 'debug' else func
+
     @observe('downsync')
     def update(self, change):
-        self.log('info', 'update widget')
+        self.log('info', '------------ host update ------------')
+        event = change.new.split('-')[0]
 
         # copy original data
         self.df_copy = self.df.copy()
         self.styler_copy = self.styler._copy(True)
-
-        # reset viewport dimensions
-        if self.df_copy.shape != (self.n_rows, self.n_cols):
-            self.n_rows, self.n_cols = self.df_copy.shape
-            self.upsync = f'reset-{datetime.now().timestamp() * 1000:.0f}'
-            return
 
         # update data
         self.filter()
@@ -135,12 +140,16 @@ class PandasWidget(DOMWidget):
         self.n_rows, self.n_cols = self.df_copy.shape
         self.df_copy = self.df_copy.iloc[self.start_row:self.end_row]
 
+        # reset viewport dimensions
+        if event in ['search']:
+            self.upsync = f'reset-{datetime.now().timestamp() * 1000:.0f}'
+            return
+
         # update viewport representation
         self.styler_copy.data = self.df_copy
-        self.styler_copy.index = self.df_copy.index
-        self.styler_copy.columns = self.df_copy.columns
         self.view = self.styles().to_html()
 
+    @timeit
     def filter(self):
 
         # drop hidden rows
@@ -155,6 +164,7 @@ class PandasWidget(DOMWidget):
 
         # TODO: generate filter arguments
 
+    @timeit
     def search(self):
 
         # build search query
@@ -176,6 +186,7 @@ class PandasWidget(DOMWidget):
             self.df_copy = self.df_copy.loc[mask]
             df_str = df_str.loc[mask]
 
+    @timeit
     def sort(self):
 
         # use sorted rows
@@ -196,6 +207,7 @@ class PandasWidget(DOMWidget):
             sort_args['inplace'] = True
             self.df_copy.sort_values(**sort_args)
 
+    @timeit
     def order(self):
 
         # drop hidden columns
@@ -210,6 +222,7 @@ class PandasWidget(DOMWidget):
             self.df_copy = self.df_copy.reindex(columns=columns)
             self.log('info', f'order columns = {columns}')
 
+    @timeit
     def styles(self):
 
         # global table styles
@@ -230,11 +243,9 @@ class PandasWidget(DOMWidget):
         }, overwrite=False)
 
         # column table styles
-        column_styles = {}
-        for col in self.df_copy.columns:
-            iloc = self.df.columns.get_loc(col)
-            column_styles[col] = [{ 'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')] }]
-        self.styler_copy.set_table_styles(table_styles=column_styles, overwrite=False, axis=0)
+        cols = self.df_copy.columns.unique()
+        styles = {col:[{'selector':'th', 'props':[('--pd-df-iloc', f'iloc-{iloc}')]}] for col, iloc in zip(cols, self.df.columns.get_indexer_for(cols))}
+        self.styler_copy.set_table_styles(table_styles=styles, overwrite=False, axis=0)
 
         # column format styles
         draggable = str(not isinstance(self.df_copy.columns, pd.MultiIndex)).lower()
@@ -246,55 +257,51 @@ class PandasWidget(DOMWidget):
         self.styler_copy.format_index(lambda x: col_format.format(x), axis=1)
 
         # row table styles
-        row_styles = {}
-        for row in self.df_copy.index:
-            iloc = self.df.index.get_loc(row)
-            row_styles[row] = [{ 'selector': 'th', 'props': [('--pd-df-iloc', f'iloc-{iloc}')] }]
-        self.styler_copy.set_table_styles(table_styles=row_styles, overwrite=False, axis=1)
+        rows = self.df_copy.index.unique()
+        styles = {row:[{'selector':'th', 'props':[('--pd-df-iloc', f'iloc-{iloc}')]}] for row, iloc in zip(rows, self.df.index.get_indexer_for(rows))}
+        self.styler_copy.set_table_styles(table_styles=styles, overwrite=False, axis=1)
 
         # row format styles
         row_text = '<span class="pd-row-text">{0}</span>'
         row_format = f'{row_text}'
         self.styler_copy.format_index(lambda x: row_format.format(x), axis=0)
 
-        return self.chain(self.styler_copy, self.styler)
+        return self.chain(self.styler_copy._copy(False), self.styler)
 
+    @timeit
     def chain(self, styler1, styler2):
         def func(func1, func2):
             return lambda x: func1(func2(str(x)))
-        styler = styler1._copy(True)
 
         # chain column labels format functions, maps (level, col)
-        ckeys = list(styler._display_funcs_columns.keys())
-        clocs1 = styler.columns.get_indexer_for(styler2.columns)
-        clocs2 = styler.columns.get_indexer_for(styler1.columns)
-        for cloc1, cloc2 in zip(clocs1, clocs2):
+        ckeys = list(styler1._display_funcs_columns.keys())
+        clocs = [cloc for cloc in enumerate(styler1.columns.get_indexer_for(styler2.data.columns.unique())) if cloc[1] >= 0]
+        for cloc2, cloc1 in clocs:
             cfunc1 = styler1._display_funcs_columns[ckeys[cloc1]]
             cfunc2 = styler2._display_funcs_columns[ckeys[cloc2]]
-            styler._display_funcs_columns[ckeys[cloc1]] = func(cfunc1, cfunc2)
+            styler1._display_funcs_columns[ckeys[cloc1]] = func(cfunc1, cfunc2)
 
         # chain row labels format functions, maps (row, level)
-        rkeys = list(styler._display_funcs_index.keys())
-        rlocs1 = styler.index.get_indexer_for(styler2.index)
-        rlocs2 = styler.index.get_indexer_for(styler1.index)
-        for rloc1, rloc2 in zip(rlocs1, rlocs2):
+        rkeys = list(styler1._display_funcs_index.keys())
+        rlocs = [rloc for rloc in enumerate(styler1.index.get_indexer_for(styler2.data.index.unique())) if rloc[1] >= 0]
+        for rloc2, rloc1 in rlocs:
             rfunc1 = styler1._display_funcs_index[rkeys[rloc1]]
             rfunc2 = styler2._display_funcs_index[rkeys[rloc2]]
-            styler._display_funcs_index[rkeys[rloc1]] = func(rfunc1, rfunc2)
+            styler1._display_funcs_index[rkeys[rloc1]] = func(rfunc1, rfunc2)
 
         # swap data labels format functions, maps (row, col)
-        if len(styler._display_funcs) > 0:
-            for rloc1, rloc2 in zip(rlocs1, rlocs2):
-                for cloc1, cloc2 in zip(clocs1, clocs2):
+        if len(styler1._display_funcs) > 0:
+            for rloc2, rloc1 in rlocs:
+                for cloc2, cloc1 in clocs:
                     rcfunc2 = styler2._display_funcs[(rloc2, cloc2)]
-                    styler._display_funcs[(rloc1, cloc1)] = rcfunc2
+                    styler1._display_funcs[(rloc1, cloc1)] = rcfunc2
         else:
-            styler.format(precision=self.precision)
+            styler1.format(precision=self.precision)
 
-        return styler
+        return styler1
 
     def log(self, level, message):
-        levels = { 'info': 0, 'warn': 1, 'error': 2 }
+        levels = { 'debug': 0, 'info': 1, 'warn': 2, 'error': 3 }
         if not (levels[level] >= levels[module_log]):
             return
 
