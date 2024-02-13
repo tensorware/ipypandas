@@ -22,6 +22,7 @@ extensions = [
 ]
 docs = dirname(dirname(__file__))
 root = dirname(docs)
+
 sys.path.insert(0, root)
 sys.path.insert(0, pjoin(docs, 'sphinxext'))
 
@@ -38,7 +39,7 @@ version = '%i.%i' % version_ns['version_info'][:2]
 release = version_ns['__version__']
 
 # add any paths that contain templates relative to this directory
-templates_path = ['_templates']
+templates_path = ['templates']
 
 # the suffixes of source filenames
 source_suffix = ['.rst', '.md']
@@ -113,14 +114,17 @@ nbsphinx_widgets_path = ''
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 if not on_rtd:
     html_theme = 'pydata_sphinx_theme'
-    html_logo = 'static/images/logo.png'
-    html_css_files = ['styles/theme.css']
-html_static_path = ['static']
-htmlhelp_basename = 'ipypandasdoc'
+    html_theme_options = { 'navigation_with_keys': True }
+    html_sidebars = { '**': [] }
 
+html_static_path = ['static']
+html_css_files = ['styles/theme.css']
+html_logo = 'static/images/logo.png'
+
+htmlhelp_basename = 'ipypandasdoc'
 
 def setup(app):
     def add_scripts(app):
-        for fname in ['helper.js', 'embed.js']:
-            app.add_js_file(fname)
+        for file in ['helper.js', 'embed.js']:
+            app.add_js_file(file)
     app.connect('builder-inited', add_scripts)

@@ -4,18 +4,24 @@ ipypandas
 
 Version: |release|
 
+.. note::
+
+    ❗ PROOF OF CONCEPT, WORK IN PROGRESS ❗
+
 Interactive JupyterLab features for the python data analysis library pandas.
 
 
 Quickstart
 ----------
 
-To get started with ipypandas, install with pip::
+To get started with ipypandas, install it via pip::
 
     pip install ipypandas
 
 Importing ipypandas will enable the interactive pandas output globally::
 
+    import pandas as pd
+    ...
     import ipypandas
 
 
@@ -23,20 +29,19 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Installation
 
    installation/installation
-   installation/introduction
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Examples
 
    examples/examples
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Development
 
    development/development

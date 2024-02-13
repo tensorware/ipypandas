@@ -3,7 +3,15 @@
 [![Build Status](https://travis-ci.org/tensorware/ipypandas.svg?branch=master)](https://travis-ci.org/tensorware/ipypandas)
 [![codecov](https://codecov.io/gh/tensorware/ipypandas/branch/master/graph/badge.svg)](https://codecov.io/gh/tensorware/ipypandas)
 
+***❗ PROOF OF CONCEPT, WORK IN PROGRESS ❗***
+
+<a href="https://github.com/tensorware/ipypandas">
+    <img src="https://raw.githubusercontent.com/tensorware/ipypandas/main/docs/source/static/images/logo.png" style="display:inline-block;width:80px;margin-right:10px;" align="left"/>
+</a>
+
 Interactive JupyterLab features for the python data analysis library pandas.
+
+<br clear="left"/>
 
 ## Installation
 You can install using `pip`:
@@ -80,4 +88,4 @@ tbump <new-version>
 ```
 
 ## Credits
-Template from `https://github.com/jupyter-widgets/widget-ts-cookiecutter`.
+Based on the jupyter-widgets [cookiecutter template](https://github.com/jupyter-widgets/widget-ts-cookiecutter).

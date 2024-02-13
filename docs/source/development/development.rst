@@ -10,10 +10,10 @@ the repository::
 
 Next, install it with a develop install using pip::
 
-    pip install -e .
+    pip install -e ".[examples, tests, docs]"
 
 
-If you are planning on working on the JS/frontend code, you should also do
+If you are planning on working on the frontend code, you should also do
 a link installation of the extension::
 
     jupyter labextension develop --overwrite .
