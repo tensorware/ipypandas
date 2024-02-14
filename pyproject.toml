@@ -4,7 +4,7 @@ requires = ["hatch-nodejs-version>=0.3.2", "hatchling>=1.21.1", "jupyterlab>=4.0
 
 [project]
 name = "ipypandas"
-version = "0.1.0"
+version = "0.1.1"
 description = "Interactive JupyterLab features for the python data analysis library pandas."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -63,7 +63,7 @@ field = [{ name = "channel", default = "" }, { name = "release", default = "" }]
 file = [{ src = "ipypandas/version.py" }, { src = "pyproject.toml", version_template = "version = \"{major}.{minor}.{patch}{channel}{release}\"" }]
 
 [tool.tbump.version]
-current = "0.1.0"
+current = "0.1.1"
 regex = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)((?P<channel>a|b|rc|dev)(?P<release>\\d+))?"
 
 [tool.tbump.git]
