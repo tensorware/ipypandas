@@ -3,30 +3,30 @@ include README.md
 
 include pyproject.toml
 include pytest.ini
-include .coveragerc
 
-include tsconfig.json
+include install.json
 include package.json
+include tsconfig.json
+include babel.config.js
 include webpack.config.js
 include ipypandas/labextension/*.tgz
+
+# Typescript
+graft src
+prune lib
+prune **/node_modules
 
 # Documentation
 graft docs
 exclude docs/\#*
 prune docs/build
 
-# Examples
-graft examples
-
 # Tests
 graft tests
 prune tests/build
 
-# Javascript files
-graft src
-prune **/node_modules
-prune coverage
-prune lib
+# Examples
+graft examples
 
 # Patterns to exclude from any directory
 global-exclude *~

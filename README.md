@@ -1,7 +1,6 @@
 
 # ipypandas
-[![Build Status](https://travis-ci.org/tensorware/ipypandas.svg?branch=master)](https://travis-ci.org/tensorware/ipypandas)
-[![codecov](https://codecov.io/gh/tensorware/ipypandas/branch/master/graph/badge.svg)](https://codecov.io/gh/tensorware/ipypandas)
+[![Build Status](https://travis-ci.org/tensorware/ipypandas.svg?branch=main)](https://travis-ci.org/tensorware/ipypandas)
 
 ***❗ PROOF OF CONCEPT, WORK IN PROGRESS ❗***
 
