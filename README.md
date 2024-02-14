@@ -88,4 +88,7 @@ tbump <new-version>
 ```
 
 ## Credits
-Based on the jupyter-widgets [cookiecutter template](https://github.com/jupyter-widgets/widget-ts-cookiecutter).
+Based on the [cookiecutter template](https://github.com/jupyter-widgets/widget-ts-cookiecutter) from [jupyter-widgets](https://github.com/jupyter-widgets).
+
+## License [![license](https://img.shields.io/github/license/tensorware/ipypandas)](#license-)
+[BSD-3-Clause](https://github.com/tensorware/ipypandas/blob/main/LICENSE)

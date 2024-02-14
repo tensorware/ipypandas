@@ -9,6 +9,7 @@ import pandas as pd
 
 from time import time
 from datetime import datetime
+from decorator import decorator
 from collections import defaultdict
 from pandas.io.formats.style import Styler
 
@@ -116,13 +117,13 @@ class PandasWidget(DOMWidget):
 
     @staticmethod
     def timeit(func):
-        def wrapper(*args, **kwargs):
+        def wrapper(func, *args, **kwargs):
             start = time()
             result = func(*args, **kwargs)
             end = time()
             args[0].log('debug', f'{func.__name__} executed in {(end - start) * 1000:.2f} ms')
             return result
-        return wrapper
+        return decorator(wrapper, func)
 
     @observe('sync_down')
     def update(self, change):
