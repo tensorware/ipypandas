@@ -89,8 +89,8 @@
         "clean": "jlpm run clean:lib && jlpm run clean:labextension",
         "clean:lib": "rimraf .yarn lib dist docs/build",
         "clean:labextension": "rimraf ipypandas/labextension",
-        "watch": "npm-run-all -p 'watch:*'",
-        "watch:lib": "tsc -w",
+        "watch": "run-p watch:src watch:labextension",
+        "watch:src": "tsc -w --sourceMap",
         "watch:labextension": "jupyter labextension watch ."
     },
     "dependencies": {
