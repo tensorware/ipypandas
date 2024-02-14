@@ -115,7 +115,6 @@ class PandasWidget(DOMWidget):
         # init pandas widget
         super(PandasWidget, self).__init__(**kwargs)
 
-    @staticmethod
     def timeit(func):
         def wrapper(func, *args, **kwargs):
             start = time()
