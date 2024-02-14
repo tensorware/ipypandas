@@ -22,13 +22,13 @@ pip install ipypandas
 ## Development Installation
 Create a dev environment:
 ```bash
-mamba create -n ipypandas python=3.12 jupyterlab=4.0 yarn=4.0 nodejs=20.5
+mamba create -n ipypandas python=3.12 jupyterlab=4.0 nodejs=20.5
 mamba activate ipypandas
 ```
 
 Install npm packages.
 ```bash
-yarn install
+jlpm install
 ```
 
 Install the python module and build TS dependencies.
@@ -45,7 +45,7 @@ jupyter labextension develop --overwrite .
 
 #### Install
 ```bash
-yarn clean && yarn install && yarn build
+jlpm clean && jlpm install && jlpm build
 pip uninstall ipypandas && pip install -e ".[examples, tests, docs]"
 ```
 
@@ -68,7 +68,7 @@ If you use JupyterLab to develop then you can watch the source directory and run
 terminals to watch for changes in the extension's source and automatically rebuild the widget.
 ```bash
 # watch the source directory and automatically rebuilding when needed
-yarn clean && yarn install && yarn build && yarn watch
+jlpm clean && jlpm install && jlpm build && jlpm watch
 
 # run JupyterLab in another terminal (use ipypandas environment)
 jupyter lab ./examples --no-browser

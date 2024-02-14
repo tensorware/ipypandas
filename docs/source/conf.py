@@ -107,6 +107,7 @@ texinfo_documents = [
 ]
 
 # set the nbsphinx js path to empty to avoid showing widgets twice
+nbsphinx_allow_errors = True
 nbsphinx_requirejs_path = ''
 nbsphinx_widgets_path = ''
 

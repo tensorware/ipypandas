@@ -82,11 +82,11 @@
     "scripts": {
         "test": "jest && pytest",
         "lint": "eslint . --ext .ts,.tsx",
-        "build": "yarn run build:less && yarn run build:lib && yarn run build:labextension",
+        "build": "jlpm run build:less && jlpm run build:lib && jlpm run build:labextension",
         "build:lib": "tsc && webpack",
         "build:less": "lessc src/styles/index.less src/styles/index.css",
         "build:labextension": "jupyter labextension build .",
-        "clean": "yarn run clean:lib && yarn run clean:labextension",
+        "clean": "jlpm run clean:lib && jlpm run clean:labextension",
         "clean:lib": "rimraf .yarn lib dist docs/build",
         "clean:labextension": "rimraf ipypandas/labextension",
         "watch": "npm-run-all -p 'watch:*'",
