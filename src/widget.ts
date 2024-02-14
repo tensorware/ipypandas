@@ -9,7 +9,7 @@ import '../src/styles/index.css';
 
 export class PandasModel extends DOMWidgetModel {
     static serializers: ISerializers = {
-        ...DOMWidgetModel.serializers,
+        ...DOMWidgetModel.serializers
     };
 
     static model_name = 'PandasModel';
@@ -33,7 +33,7 @@ export class PandasModel extends DOMWidgetModel {
             _scroll_left: 0,
             _view_height: 0,
             _head_height: 0,
-            _row_height: 0,
+            _row_height: 0
         };
     }
 }
@@ -158,7 +158,7 @@ export class PandasView extends DOMWidgetView {
 
         return {
             start_row: start_row || 0,
-            end_row: end_row || 0,
+            end_row: end_row || 0
         };
     }
 
@@ -185,7 +185,7 @@ export class PandasView extends DOMWidgetView {
         body.css({
             '--pd-body-padding-top': `${padding_top}px`,
             '--pd-body-padding-bottom': `${padding_bottom}px`,
-            '--pd-body-td-max-width': `${this.model.get('max_colwidth')}ch`,
+            '--pd-body-td-max-width': `${this.model.get('max_colwidth')}ch`
         });
 
         // set model range
@@ -209,7 +209,7 @@ export class PandasView extends DOMWidgetView {
         view.css({
             '--pd-view-resize': resize,
             '--pd-view-min-height': `${min_height}px`,
-            '--pd-view-max-height': `${max_height}px`,
+            '--pd-view-max-height': `${max_height}px`
         });
 
         // increase viewport height (in case horizontal scrollbars exists)
@@ -218,7 +218,7 @@ export class PandasView extends DOMWidgetView {
         min_height += scroll_bar_height;
         view.css({
             '--pd-view-min-height': `${min_height}px`,
-            '--pd-view-max-height': `${max_height}px`,
+            '--pd-view-max-height': `${max_height}px`
         });
 
         // set model height
@@ -414,7 +414,7 @@ export class PandasView extends DOMWidgetView {
         root.css({
             '--pd-root-opacity': '0',
             '--pd-root-cursor': 'wait',
-            '--pd-root-min-height': `${root.height() || 0}px`,
+            '--pd-root-min-height': `${root.height() || 0}px`
         });
         root.empty();
 
@@ -535,7 +535,7 @@ export class PandasView extends DOMWidgetView {
             root.css({
                 '--pd-root-opacity': '1',
                 '--pd-root-cursor': 'auto',
-                '--pd-root-min-height': 'initial',
+                '--pd-root-min-height': 'initial'
             });
 
             // set viewport range
@@ -693,7 +693,7 @@ export class PandasView extends DOMWidgetView {
         const fgrgb = {
             r: Math.round((fga * (fgr / 255) + (1 - fga) * (bgr / 255)) * 255),
             g: Math.round((fga * (fgg / 255) + (1 - fga) * (bgg / 255)) * 255),
-            b: Math.round((fga * (fgb / 255) + (1 - fga) * (bgb / 255)) * 255),
+            b: Math.round((fga * (fgb / 255) + (1 - fga) * (bgb / 255)) * 255)
         };
         return `rgb(${fgrgb.r}, ${fgrgb.g}, ${fgrgb.b})`;
     }
@@ -734,8 +734,8 @@ export class PandasView extends DOMWidgetView {
                 date: `${Date.now()}`,
                 source: 'ipypandas, widget.ts',
                 level: levels[level],
-                message: message,
-            }),
+                message: message
+            })
         );
     }
 

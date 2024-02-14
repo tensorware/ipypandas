@@ -14,10 +14,10 @@ const pandasPlugin: IPlugin<Application<Widget>, void> = {
         registry.registerWidget({
             name: MODULE_NAME,
             version: MODULE_VERSION,
-            exports: widgetExports,
+            exports: widgetExports
         });
     },
-    autoStart: true,
+    autoStart: true
 } as unknown as IPlugin<Application<Widget>, void>;
 
 export default pandasPlugin;

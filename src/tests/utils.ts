@@ -102,14 +102,14 @@ export interface Constructor<T> {
 export function createTestModel<T extends widgets.WidgetModel>(constructor: Constructor<T>, attributes?: any): T {
     const modelOptions = {
         widget_manager: new DummyManager(),
-        model_id: widgets.uuid(),
+        model_id: widgets.uuid()
     };
     return new constructor(attributes, modelOptions);
 }
 
 export function createTestView<T extends widgets.WidgetView>(constructor: Constructor<T>, attributes?: any): T {
     const viewOptions = {
-        options: {},
+        options: {}
     };
     return new constructor(attributes, viewOptions);
 }

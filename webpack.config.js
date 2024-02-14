@@ -1,7 +1,7 @@
 const path = require('path');
 const version = require('./package.json').version;
 
-const mode = 'production'
+const mode = 'production';
 const externals = ['@jupyter-widgets/base'];
 const resolve = {
     extensions: ['.webpack.js', '.web.js', '.js', '.ts']

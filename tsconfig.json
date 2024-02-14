@@ -5,13 +5,8 @@
         "module": "commonjs",
         "moduleResolution": "node",
         "target": "es2020",
-        "lib": [
-            "es2020",
-            "dom"
-        ],
-        "types": [
-            "jest"
-        ],
+        "lib": ["es2020", "dom"],
+        "types": ["jest"],
         "strict": true,
         "sourceMap": true,
         "declaration": true,
@@ -22,8 +17,5 @@
         "resolveJsonModule": true,
         "strictPropertyInitialization": false
     },
-    "include": [
-        "src/**/*.ts",
-        "src/**/*.tsx"
-    ]
+    "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

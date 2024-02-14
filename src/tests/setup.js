@@ -3,5 +3,5 @@
 
 // Polyfill for drag event
 Object.defineProperty(window, 'DragEvent', {
-    value: class DragEvent { }
+    value: class DragEvent {}
 });

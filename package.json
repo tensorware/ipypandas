@@ -41,20 +41,8 @@
     "prettier": {
         "tabWidth": 4,
         "printWidth": 200,
-        "singleQuote": true
-    },
-    "babel": {
-        "sourceMap": "inline",
-        "presets": [
-            [
-                "@babel/preset-env",
-                {
-                    "targets": {
-                        "node": "current"
-                    }
-                }
-            ]
-        ]
+        "singleQuote": true,
+        "trailingComma": "none"
     },
     "jest": {
         "automock": false,
