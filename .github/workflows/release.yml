@@ -27,8 +27,8 @@ jobs:
               uses: actions/upload-artifact@v3
               with:
                   name: python-package-distributions
-                  path: dist/
-    publish:
+                  path: dist/ipypandas*
+    package:
         runs-on: ubuntu-latest
         needs:
             - build
