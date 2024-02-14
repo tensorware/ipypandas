@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Interactive JupyterLab features for the python data analysis library pandas."
 readme = "README.md"
 license = { file = "LICENSE" }
-authors = [{ name = "Tensorware", email = "development@tensorware.net" }]
+authors = [{ name = "Tensorware" }]
 keywords = ["IPython", "Jupyter", "Widgets"]
 classifiers = [
     "Framework :: Jupyter",

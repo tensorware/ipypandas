@@ -1,16 +1,13 @@
 
 # ipypandas
-[![Build Status](https://travis-ci.org/tensorware/ipypandas.svg?branch=main)](https://travis-ci.org/tensorware/ipypandas)
+
+<a href="https://github.com/tensorware/ipypandas">
+    <img src="https://raw.githubusercontent.com/tensorware/ipypandas/main/docs/source/static/images/logo.png" width="100"/>
+</a>
 
 ***❗ PROOF OF CONCEPT, WORK IN PROGRESS ❗***
 
-<a href="https://github.com/tensorware/ipypandas">
-    <img src="https://raw.githubusercontent.com/tensorware/ipypandas/main/docs/source/static/images/logo.png" style="display:inline-block;width:80px;margin-right:10px;" align="left"/>
-</a>
-
 Interactive JupyterLab features for the python data analysis library pandas.
-
-<br clear="left"/>
 
 ## Installation
 You can install using `pip`:
@@ -30,7 +27,7 @@ Install npm packages.
 jlpm install
 ```
 
-Install the python module and build TS dependencies.
+Install the python module and build typescript dependencies.
 ```bash
 pip install -e ".[examples, tests, docs]"
 ```
@@ -76,7 +73,7 @@ jupyter lab ./examples --no-browser
 After a change wait for the build to finish and then refresh your browser and the changes should take effect.
 
 ### Python
-If you make a change to the python code then you will need to restart the notebook kernel to have it take effect.
+If you make changes to the python code then you will need to restart the notebook kernel to have it take effect.
 
 ### Versioning
 To update the version, install tbump and use it to bump the version.

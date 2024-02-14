@@ -15,8 +15,8 @@ jobs:
             - name: Base Setup
               uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
               with:
+                  python_version: '3.12'
                   node_version: '20.0'
-                  python-version: '3.12'
 
             - name: Build Package
               run: |
