@@ -32,11 +32,11 @@ author = 'Tensorware'
 copyright = '2024, Tensorware'
 
 # get version from python package
-version_ns = dict()
+version_py = dict()
 with open(os.path.join(root, 'ipypandas', 'version.py')) as f:
-    exec(f.read(), version_ns)
-version = '%i.%i' % version_ns['version_info'][:2]
-release = version_ns['__version__']
+    exec(f.read(), version_py)
+version = version_py['__version__']
+release = version_py['__version__']
 
 # add any paths that contain templates relative to this directory
 templates_path = ['templates']
