@@ -60,9 +60,17 @@ jobs:
     npmjs:
         runs-on: ubuntu-latest
         needs: build
+        environment:
+            name: npmjs
         steps:
             - name: Checkout
               uses: actions/checkout@v4
+
+            - name: Base Setup
+              uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+              with:
+                  python_version: '3.12'
+                  node_version: '20.0'
 
             - name: Registry Setup
               uses: actions/setup-node@v4
@@ -70,12 +78,6 @@ jobs:
                   registry-url: 'https://registry.npmjs.org'
                   node-version: '20.0'
                   always-auth: true
-
-            - name: Base Setup
-              uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-              with:
-                  python_version: '3.12'
-                  node_version: '20.0'
 
             - name: Package Setup
               run: |
