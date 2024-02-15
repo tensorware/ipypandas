@@ -40,9 +40,8 @@ docs = [
     "pydata-sphinx-theme>=0.8.0",
     "pypandoc>=1.7.5",
 ]
+tests = ["hatch>=1.9.3", "nbval>=0.9.5", "pytest>=7.0.0"]
 examples = ["ipywidgets>=8.0.0", "pandas>=2.0.0"]
-tests = ["nbval>=0.9.5", "pytest>=7.0.0"]
-build = ["hatch>=1.9.3"]
 
 [tool.hatch.build]
 artifacts = ["ipypandas/labextension"]
