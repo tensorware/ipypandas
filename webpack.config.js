@@ -27,7 +27,28 @@ const rules = [
 
 module.exports = [
     /**
-     * JavaScript that is run on load of the notebook.
+     * JavaScript bundle that is run on load of the notebook.
+     */
+    {
+        entry: './src/extension.ts',
+        devtool: 'source-map',
+        output: {
+            filename: 'index.js',
+            path: path.resolve(__dirname, 'ipypandas', 'nbextension'),
+            library: {
+                name: 'ipypandas',
+                type: 'amd'
+            }
+        },
+        module: {
+            rules: rules
+        },
+        mode: mode,
+        externals,
+        resolve
+    },
+    /**
+     * Similar to the notebook bundle but with path for static assets.
      */
     {
         entry: './src/index.ts',
@@ -35,14 +56,16 @@ module.exports = [
         output: {
             filename: 'index.js',
             path: path.resolve(__dirname, 'dist'),
-            library: 'ipypandas',
-            libraryTarget: 'amd',
-            publicPath: 'https://unpkg.com/ipypandas@' + version + '/dist/'
+            publicPath: 'https://unpkg.com/ipypandas@' + version + '/dist/',
+            library: {
+                name: 'ipypandas',
+                type: 'amd'
+            }
         },
-        mode: mode,
         module: {
             rules: rules
         },
+        mode: mode,
         externals,
         resolve
     },
@@ -55,13 +78,15 @@ module.exports = [
         output: {
             filename: 'embed.js',
             path: path.resolve(__dirname, 'docs', 'source', 'static'),
-            library: 'ipypandas',
-            libraryTarget: 'amd'
+            library: {
+                name: 'ipypandas',
+                type: 'amd'
+            }
         },
-        mode: mode,
         module: {
             rules: rules
         },
+        mode: mode,
         externals,
         resolve
     }

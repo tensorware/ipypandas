@@ -21,9 +21,9 @@
         "url": "https://github.com/tensorware/ipypandas/issues"
     },
     "files": [
-        "src/**/*.css",
-        "dist/**/*.js",
-        "lib/**/*.js"
+        "src/styles/*.css",
+        "dist/*.js",
+        "lib/*.js"
     ],
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
@@ -83,15 +83,19 @@
     "scripts": {
         "test": "jest && pytest",
         "lint": "eslint . --ext .ts,.tsx",
-        "build": "jlpm run build:less && jlpm run build:lib && jlpm run build:labextension",
-        "build:lib": "tsc && webpack",
+        "build": "jlpm run build:less && jlpm run build:lib && jlpm run build:nbextension && jlpm run build:labextension",
+        "build:lib": "tsc",
         "build:less": "lessc src/styles/index.less src/styles/index.css",
+        "build:nbextension": "webpack",
         "build:labextension": "jupyter labextension build .",
-        "clean": "jlpm run clean:lib && jlpm run clean:labextension",
-        "clean:lib": "rimraf .yarn lib dist docs/build",
+        "clean": "jlpm run clean:lib && jlpm run clean:docs && jlpm run clean:nbextension && jlpm run clean:labextension",
+        "clean:lib": "rimraf lib dist",
+        "clean:docs": "rimraf docs/build",
+        "clean:nbextension": "rimraf ipypandas/nbextension/index.*",
         "clean:labextension": "rimraf ipypandas/labextension",
-        "watch": "run-p watch:src watch:labextension",
-        "watch:src": "tsc -w --sourceMap",
+        "watch": "run-p watch:lib watch:nbextension watch:labextension",
+        "watch:lib": "tsc -w --sourceMap",
+        "watch:nbextension": "webpack --watch --mode=development",
         "watch:labextension": "jupyter labextension watch ."
     },
     "dependencies": {

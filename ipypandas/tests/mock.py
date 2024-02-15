@@ -10,10 +10,12 @@ from ipykernel.comm import Comm
 from ipywidgets import Widget
 
 
+_widget_attrs = {}
+undefined = object()
+
+
 class MockComm(Comm):
     """
-    A mock Comm object.
-
     Can be used to inspect calls to Comm's open/send/close methods.
     """
     comm_id = 'a-b-c-d'
@@ -33,10 +35,6 @@ class MockComm(Comm):
 
     def close(self, *args, **kwargs):
         self.log_close.append((args, kwargs))
-
-
-_widget_attrs = {}
-undefined = object()
 
 
 @pytest.fixture

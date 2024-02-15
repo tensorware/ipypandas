@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { PandasView } from '..';
-import { createTestView } from './utils';
+import { createTestView } from './mock';
 
 describe('PandasView', () => {
     it('should not be createable', () => {

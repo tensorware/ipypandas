@@ -22,14 +22,9 @@ mamba create -n ipypandas python=3.12 jupyterlab=4.0 nodejs=20.5
 mamba activate ipypandas
 ```
 
-Install npm packages.
-```bash
-jlpm install
-```
-
 Install the python module and build typescript dependencies.
 ```bash
-pip install -e ".[examples, tests, docs]"
+pip install -e .[all]
 ```
 
 When developing your extensions, you need to manually enable your extensions with the frontend. For JupyterLab, this is done by the command:
@@ -42,7 +37,7 @@ jupyter labextension develop --overwrite .
 #### Install
 ```bash
 jlpm clean && jlpm install && jlpm build
-pip uninstall ipypandas && pip install -e ".[examples, tests, docs]"
+pip uninstall ipypandas && pip install -e .[all]
 ```
 
 #### Extension

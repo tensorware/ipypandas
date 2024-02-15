@@ -16,3 +16,16 @@ def test_labextension_paths():
     # some sanity checks
     assert len(path) == 1
     assert isinstance(path[0], dict)
+
+
+def test_nbextension_path():
+
+    # check that magic function can be imported from package root
+    from ipypandas import _jupyter_nbextension_paths
+
+    # ensure that it can be called without incident
+    path = _jupyter_nbextension_paths()
+
+    # some sanity checks
+    assert len(path) == 1
+    assert isinstance(path[0], dict)

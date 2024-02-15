@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { PandasModel } from '..';
-import { createTestModel } from './utils';
+import { createTestModel } from './mock';
 
 describe('PandasModel', () => {
     it('should be createable', () => {

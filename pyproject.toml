@@ -29,6 +29,7 @@ dependencies = ["ipywidgets>=8.0.0", "pandas>=2.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/tensorware/ipypandas"
+Repository = "https://github.com/tensorware/ipypandas"
 
 [project.optional-dependencies]
 docs = [
@@ -45,28 +46,32 @@ tests = ["hatch>=1.9.3", "nbval>=0.9.5", "pytest>=7.0.0"]
 all = ["ipypandas[docs,examples,tests]"]
 
 [tool.hatch.build]
-artifacts = ["ipypandas/labextension"]
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.build.targets.wheel.shared-data]
-"ipypandas/labextension" = "share/jupyter/labextensions/ipypandas"
-"./install.json" = "share/jupyter/labextensions/ipypandas/install.json"
+artifacts = ["ipypandas/nbextension/index.*", "ipypandas/labextension"]
+exclude = ["ipypandas/tests"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [".git", ".github", ".vscode"]
 
+[tool.hatch.build.targets.wheel.shared-data]
+"ipypandas/nbextension" = "share/jupyter/nbextensions/ipypandas"
+"ipypandas/labextension" = "share/jupyter/labextensions/ipypandas"
+"src/nbextension/ipypandas.json" = "etc/jupyter/nbconfig/notebook.d/ipypandas.json"
+"src/labextension/install.json" = "share/jupyter/labextensions/ipypandas/install.json"
+
 [tool.hatch.build.hooks.jupyter-builder]
 build-function = "hatch_jupyter_builder.npm_builder"
-ensured-targets = ["ipypandas/labextension/package.json"]
-skip-if-exists = ["ipypandas/labextension/package.json"]
+ensured-targets = ["ipypandas/nbextension/index.js", "ipypandas/labextension/package.json"]
 dependencies = ["hatch-jupyter-builder>=0.8.3"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 path = "."
 npm = ["jlpm"]
 build_cmd = "build"
+
+[tool.pytest.ini_options]
+testpaths = ["ipypandas/tests"]
+norecursedirs = ["node_modules"]
+addopts = "--nbval --nbval-current-env"
 
 [tool.tbump]
 field = [{ name = "channel", default = "" }, { name = "release", default = "" }]
