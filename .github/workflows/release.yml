@@ -85,6 +85,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: src
+                  path: /
 
             - name: Publish Package
               run: |
