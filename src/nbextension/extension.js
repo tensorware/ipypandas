@@ -1,7 +1,7 @@
 // Copyright (c) Tensorware.
 // Distributed under the terms of the Modified BSD License.
 
-// entry point for the notebook bundle containing custom model definitions.
+// entry point for the notebook bundle containing custom model definitions
 define(function () {
     'use strict';
     window['requirejs'].config({ map: { '*': { ipypandas: 'nbextensions/ipypandas/index' } } });

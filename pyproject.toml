@@ -46,7 +46,7 @@ tests = ["hatch>=1.9.3", "nbval>=0.9.5", "pytest>=7.0.0"]
 dev = ["ipypandas[docs,examples,tests]"]
 
 [tool.hatch.build]
-artifacts = ["ipypandas/nbextension/index.*", "ipypandas/labextension"]
+artifacts = ["ipypandas/nbextension", "ipypandas/labextension"]
 exclude = ["ipypandas/tests"]
 
 [tool.hatch.build.targets.sdist]

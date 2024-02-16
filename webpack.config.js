@@ -1,10 +1,7 @@
-const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
 const version = require('./package.json').version;
+const path = require('path');
 
-const externals = ['@jupyter-widgets/base'];
-const resolve = {
-    extensions: ['.webpack.js', '.web.js', '.js', '.ts']
-};
 const rules = [
     {
         test: /\.ts$/,
@@ -23,13 +20,13 @@ const rules = [
         use: [{ loader: 'file-loader' }, { loader: 'style-loader' }, { loader: 'less-loader' }, { loader: 'css-loader' }]
     }
 ];
+const resolve = { extensions: ['.webpack.js', '.web.js', '.js', '.ts'] };
+const externals = ['@jupyter-widgets/base'];
 
 module.exports = [
-    /**
-     * JavaScript bundle that is run on load of the notebook.
-     */
     {
-        entry: './src/extension.ts',
+        // javascript bundle that is run on load of the notebook
+        entry: './src/nbextension/index.ts',
         devtool: 'source-map',
         output: {
             filename: 'index.js',
@@ -42,14 +39,17 @@ module.exports = [
         module: {
             rules: rules
         },
+        plugins: [
+            new CopyPlugin({
+                patterns: [{ from: path.resolve(__dirname, 'src', 'nbextension', 'extension.js'), to: 'extension.js' }]
+            })
+        ],
         externals,
         resolve
     },
-    /**
-     * Similar to the notebook bundle but with path for static assets.
-     */
     {
-        entry: './src/index.ts',
+        // similar to the notebook bundle with unpkg public path for static assets
+        entry: './src/labextension/index.ts',
         devtool: 'source-map',
         output: {
             filename: 'index.js',
@@ -66,10 +66,8 @@ module.exports = [
         externals,
         resolve
     },
-    /**
-     * Embed widgets in the package documentation.
-     */
     {
+        // similar to the notebook bundle which embeds widgets in the documentation
         entry: './src/index.ts',
         devtool: 'source-map',
         output: {

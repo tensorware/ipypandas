@@ -91,7 +91,7 @@
         "clean": "jlpm run clean:lib && jlpm run clean:docs && jlpm run clean:nbextension && jlpm run clean:labextension",
         "clean:lib": "rimraf lib dist",
         "clean:docs": "rimraf docs/build",
-        "clean:nbextension": "rimraf ipypandas/nbextension/index.*",
+        "clean:nbextension": "rimraf ipypandas/nbextension",
         "clean:labextension": "rimraf ipypandas/labextension",
         "watch": "run-p watch:lib watch:nbextension watch:labextension",
         "watch:lib": "tsc -w --sourceMap",
@@ -113,6 +113,7 @@
         "@typescript-eslint/eslint-plugin": "^7.0.1",
         "@typescript-eslint/parser": "^7.0.1",
         "acorn": "^8.11.3",
+        "copy-webpack-plugin": "^12.0.2",
         "css-loader": "^6.10.0",
         "eslint": "^8.56.0",
         "eslint-config-prettier": "^9.1.0",
@@ -133,7 +134,7 @@
         "ts-jest": "^29.1.2",
         "ts-loader": "^9.5.1",
         "typescript": "^5.3.3",
-        "webpack": "^5.90.1",
+        "webpack": "^5.90.2",
         "webpack-cli": "^5.1.4"
     }
 }
