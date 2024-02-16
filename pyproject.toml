@@ -41,9 +41,9 @@ docs = [
     "pydata-sphinx-theme>=0.8.0",
     "pypandoc>=1.7.5",
 ]
-examples = ["jupyterlab>=4.0.0", "ipywidgets>=8.0.0", "pandas>=2.0.0"]
+examples = ["jupyterlab>=4.0.0", "ipywidgets>=8.0.0", "matplotlib>=3.0.0", "pandas>=2.0.0"]
 tests = ["hatch>=1.9.3", "nbval>=0.9.5", "pytest>=7.0.0"]
-all = ["ipypandas[docs,examples,tests]"]
+dev = ["ipypandas[docs,examples,tests]"]
 
 [tool.hatch.build]
 artifacts = ["ipypandas/nbextension/index.*", "ipypandas/labextension"]

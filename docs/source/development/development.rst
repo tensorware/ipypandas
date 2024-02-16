@@ -10,7 +10,7 @@ the repository::
 
 Next, install it with a develop install using pip::
 
-    pip install -e ".[examples, tests, docs]"
+    pip install -e .[dev]
 
 
 If you are planning on working on the frontend code, you should also do

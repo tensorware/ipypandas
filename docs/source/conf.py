@@ -9,6 +9,7 @@ import sys
 
 from os.path import dirname, join as pjoin
 
+
 # add sphinx extension module names
 extensions = [
     'sphinx.ext.autodoc',
@@ -30,6 +31,7 @@ sys.path.insert(0, pjoin(docs, 'sphinxext'))
 project = 'ipypandas'
 author = 'Tensorware'
 copyright = '2024, Tensorware'
+htmlhelp_basename = 'ipypandasdoc'
 
 # get version from python package
 version_py = dict()
@@ -39,7 +41,7 @@ version = version_py['__version__']
 release = version_py['__version__']
 
 # add any paths that contain templates relative to this directory
-templates_path = ['templates']
+templates_path = ['static/templates']
 
 # the suffixes of source filenames
 source_suffix = ['.rst', '.md']
@@ -53,77 +55,53 @@ pygments_style = 'sphinx'
 # the patterns to ignore when looking for source files
 exclude_patterns = ['**.ipynb_checkpoints']
 
-# if true, `todo` and `todoList` produce output
-todo_include_todos = False
-
-# latex specific options
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    # 'papersize': 'letterpaper',
-
-    # The font size ('10pt', '11pt' or '12pt').
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    # 'preamble': '',
-
-    # Latex figure (float) alignment
-    # 'figure_align': 'htbp'
-}
-
 # options for manual page (source start file, name, description, authors, manual section)
-man_pages = [
-    (
-        master_doc,
-        'ipypandas',
-        'ipypandas Documentation',
-        [author],
-        1
-    )
-]
+man_pages = [(
+    master_doc,
+    'ipypandas',
+    'ipypandas Documentation',
+    [author],
+    1
+)]
 
 # grouping the latex document tree (source start file, target name, title, author, document class)
-latex_documents = [
-    (
-        master_doc,
-        'ipypandas.tex',
-        'ipypandas Documentation',
-        'Tensorware',
-        'manual'
-    )
-]
+latex_documents = [(
+    master_doc,
+    'ipypandas.tex',
+    'ipypandas Documentation',
+    'Tensorware',
+    'manual'
+)]
 
 # grouping the texinfo document tree (source start file, target name, title, author, dir menu entry, description, category)
-texinfo_documents = [
-    (
-        master_doc,
-        'ipypandas',
-        'ipypandas Documentation',
-        author,
-        'ipypandas',
-        'Interactive JupyterLab features for the python data analysis library pandas.',
-        'Miscellaneous'
-    )
-]
+texinfo_documents = [(
+    master_doc,
+    'ipypandas',
+    'ipypandas Documentation',
+    author,
+    'ipypandas',
+    'Interactive JupyterLab features for the python data analysis library pandas.',
+    'Miscellaneous'
+)]
 
 # set the nbsphinx js path to empty to avoid showing widgets twice
 nbsphinx_allow_errors = True
 nbsphinx_requirejs_path = ''
 nbsphinx_widgets_path = ''
 
-# only import and set the theme if we're building docs locally
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-if not on_rtd:
+# only set the theme if we're building docs locally
+if os.environ.get('READTHEDOCS', None) != 'True':
     html_theme = 'pydata_sphinx_theme'
     html_theme_options = { 'navigation_with_keys': True }
     html_sidebars = { '**': [] }
 
+# set static file paths
 html_static_path = ['static']
 html_css_files = ['styles/theme.css']
 html_logo = 'static/images/logo.png'
 
-htmlhelp_basename = 'ipypandasdoc'
 
+# setup scripts
 def setup(app):
     def add_scripts(app):
         for file in ['helper.js', 'embed.js']:
