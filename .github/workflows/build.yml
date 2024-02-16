@@ -25,7 +25,6 @@ jobs:
 
             - name: Package Setup
               run: |
-                  sudo apt install -y pandoc
                   python -m pip install -v -e .[dev]
 
             - name: Run Linter
@@ -40,4 +39,5 @@ jobs:
               if: ${{ matrix.os == 'ubuntu-latest' }}
               working-directory: docs
               run: |
+                  sudo apt install -y pandoc
                   make html

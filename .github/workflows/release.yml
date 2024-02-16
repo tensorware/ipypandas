@@ -96,7 +96,6 @@ jobs:
 
             - name: Package Setup
               run: |
-                  sudo apt install -y pandoc
                   python -m pip install -v -e .[dev]
 
             - name: Publish Package
