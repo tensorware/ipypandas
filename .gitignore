@@ -36,6 +36,7 @@ pip-delete-this-directory.txt
 **/node_modules/
 src/styles/*.css
 ipypandas/labextension
+ipypandas/nbextension/index.*
 
 # Tests
 test_*.ipynb
