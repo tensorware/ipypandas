@@ -1,7 +1,6 @@
 const path = require('path');
 const version = require('./package.json').version;
 
-const mode = 'production';
 const externals = ['@jupyter-widgets/base'];
 const resolve = {
     extensions: ['.webpack.js', '.web.js', '.js', '.ts']
@@ -35,7 +34,6 @@ module.exports = [
         output: {
             filename: 'index.js',
             path: path.resolve(__dirname, 'ipypandas', 'nbextension'),
-            publicPath: '',
             library: {
                 name: 'ipypandas',
                 type: 'amd'
@@ -44,7 +42,6 @@ module.exports = [
         module: {
             rules: rules
         },
-        mode: mode,
         externals,
         resolve
     },
@@ -66,7 +63,6 @@ module.exports = [
         module: {
             rules: rules
         },
-        mode: mode,
         externals,
         resolve
     },
@@ -87,7 +83,6 @@ module.exports = [
         module: {
             rules: rules
         },
-        mode: mode,
         externals,
         resolve
     }

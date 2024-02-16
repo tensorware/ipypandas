@@ -19,6 +19,6 @@ const plugin: IPlugin<Application<Widget>, void> = {
         });
     },
     autoStart: true
-} as unknown as IPlugin<Application<Widget>, void>;
+} as IPlugin<Application<Widget>, void>;
 
 export default plugin;

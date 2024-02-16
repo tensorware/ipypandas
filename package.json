@@ -86,7 +86,7 @@
         "build": "jlpm run build:less && jlpm run build:lib && jlpm run build:nbextension && jlpm run build:labextension",
         "build:lib": "tsc",
         "build:less": "lessc src/styles/index.less src/styles/index.css",
-        "build:nbextension": "webpack",
+        "build:nbextension": "webpack --mode=production",
         "build:labextension": "jupyter labextension build .",
         "clean": "jlpm run clean:lib && jlpm run clean:docs && jlpm run clean:nbextension && jlpm run clean:labextension",
         "clean:lib": "rimraf lib dist",

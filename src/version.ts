@@ -2,7 +2,8 @@
 // Distributed under the terms of the Modified BSD License.
 
 // @ts-ignore
-const data = require('../package.json');
+const version = require('../package.json').version;
 
-export const MODULE_VERSION = data.version;
-export const MODULE_NAME = data.name;
+export const MODULE_NAME = 'ipypandas';
+export const MODULE_SEMVER = `^${version}`;
+export const MODULE_VERSION = version;

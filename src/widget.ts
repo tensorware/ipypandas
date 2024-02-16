@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
-import { MODULE_VERSION, MODULE_NAME } from './version';
+import { MODULE_SEMVER, MODULE_NAME } from './version';
 
 import $ from 'jquery';
 import '../src/styles/index.css';
@@ -14,11 +14,11 @@ export class PandasModel extends DOMWidgetModel {
 
     static model_name = 'PandasModel';
     static model_module = MODULE_NAME;
-    static model_module_version = MODULE_VERSION;
+    static model_module_version = MODULE_SEMVER;
 
     static view_name = 'PandasView';
     static view_module = MODULE_NAME;
-    static view_module_version = MODULE_VERSION;
+    static view_module_version = MODULE_SEMVER;
 
     defaults(): any {
         return {

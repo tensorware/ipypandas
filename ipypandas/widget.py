@@ -19,7 +19,7 @@ from traitlets import Instance, Unicode, Integer, observe
 from IPython.display import display
 from IPython.core.getipython import get_ipython
 
-from .version import module_version, module_name
+from .version import module_semver, module_name
 
 
 @register
@@ -28,12 +28,12 @@ class PandasWidget(DOMWidget):
     # module version of pandas widget
     _model_name = Unicode('PandasModel').tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
-    _model_module_version = Unicode(module_version).tag(sync=True)
+    _model_module_version = Unicode(module_semver).tag(sync=True)
 
     # view version of pandas widget
     _view_name = Unicode('PandasView').tag(sync=True)
     _view_module = Unicode(module_name).tag(sync=True)
-    _view_module_version = Unicode(module_version).tag(sync=True)
+    _view_module_version = Unicode(module_semver).tag(sync=True)
 
     # logging
     log_msg = Unicode('{}').tag(sync=True)
