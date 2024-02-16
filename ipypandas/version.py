@@ -4,6 +4,6 @@
 # Copyright (c) Tensorware.
 # Distributed under the terms of the Modified BSD License.
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 module_version = f'^{__version__}'
 module_name = 'ipypandas'
