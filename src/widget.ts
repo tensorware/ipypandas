@@ -42,22 +42,22 @@ export class PandasView extends DOMWidgetView {
     render(): void {
         const classes = [];
 
-        // init jupyter classes
-        classes.push(['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted']);
+        // append jupyter styles
+        classes.push(['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output']);
 
-        // init ipypandas classes
+        // append ipypandas styles
         classes.push('pd-root');
         if (window.matchMedia('(pointer: coarse)').matches) {
             classes.push('pd-touch');
         }
 
-        // add root classes
+        // apply root styles
         const root = $(this.el);
         classes.forEach((cls) => {
             root.addClass(cls);
         });
 
-        // update initial view
+        // update view
         this.update_data();
 
         // register change events

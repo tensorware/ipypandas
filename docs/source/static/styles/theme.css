@@ -1,0 +1,7 @@
+html[data-theme="light"] .pd-ipypandas {
+    background-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .pd-ipypandas {
+    background-color: #ffffff !important;
+}

@@ -50,6 +50,9 @@ html_theme_options = {
     'footer_end': ['copyright'],
     'navigation_with_keys': False
 }
+html_context = {
+    'default_mode': 'light'
+}
 html_sidebars = { '**': [] }
 
 # set static file paths
