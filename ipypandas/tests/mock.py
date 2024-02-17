@@ -10,16 +10,13 @@ from ipykernel.comm import Comm
 from ipywidgets import Widget
 
 
-_widget_attrs = {}
 undefined = object()
+_widget_attrs = {}
 
 
 class MockComm(Comm):
-    """
-    Can be used to inspect calls to Comm's open/send/close methods.
-    """
-    comm_id = 'a-b-c-d'
     kernel = 'Truthy'
+    comm_id = 'a-b-c-d'
 
     def __init__(self, *args, **kwargs):
         self.log_open = []
@@ -39,13 +36,13 @@ class MockComm(Comm):
 
 @pytest.fixture
 def mock_comm():
-    _widget_attrs['_comm_default'] = getattr(Widget, '_comm_default', undefined)
-    Widget._comm_default = lambda self: MockComm()
     _widget_attrs['_ipython_display_'] = Widget._ipython_display_
-
     def raise_not_implemented(*args, **kwargs):
         raise NotImplementedError()
     Widget._ipython_display_ = raise_not_implemented
+
+    _widget_attrs['_comm_default'] = getattr(Widget, '_comm_default', undefined)
+    Widget._comm_default = lambda self: MockComm()
 
     yield MockComm()
 

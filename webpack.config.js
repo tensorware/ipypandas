@@ -1,6 +1,6 @@
-const CopyPlugin = require('copy-webpack-plugin');
-const version = require('./package.json').version;
 const path = require('path');
+const pkg = require('./package.json');
+const CopyPlugin = require('copy-webpack-plugin');
 
 const rules = [
     {
@@ -30,9 +30,9 @@ module.exports = [
         devtool: 'source-map',
         output: {
             filename: 'index.js',
-            path: path.resolve(__dirname, 'ipypandas', 'nbextension'),
+            path: path.resolve(__dirname, pkg.name, 'nbextension'),
             library: {
-                name: 'ipypandas',
+                name: pkg.name,
                 type: 'amd'
             }
         },
@@ -54,9 +54,9 @@ module.exports = [
         output: {
             filename: 'index.js',
             path: path.resolve(__dirname, 'dist'),
-            publicPath: 'https://unpkg.com/ipypandas@' + version + '/dist/',
+            publicPath: `https://unpkg.com/${pkg.name}@${pkg.version}/dist/`,
             library: {
-                name: 'ipypandas',
+                name: pkg.name,
                 type: 'amd'
             }
         },
@@ -74,7 +74,7 @@ module.exports = [
             filename: 'embed.js',
             path: path.resolve(__dirname, 'docs', 'source', 'static'),
             library: {
-                name: 'ipypandas',
+                name: pkg.name,
                 type: 'amd'
             }
         },

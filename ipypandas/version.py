@@ -4,8 +4,19 @@
 # Copyright (c) Tensorware.
 # Distributed under the terms of the Modified BSD License.
 
-__version__ = '0.0.6'
+import os
+import json
+from collections import defaultdict
 
-module_name = 'ipypandas'
-module_semver = f'^{__version__}'
-module_version = __version__
+
+def package():
+    path = os.path.join(os.path.dirname(__file__), 'labextension', 'package.json')
+    if os.path.exists(path):
+        return json.load(open(path))
+    return defaultdict(str)
+
+pkg = package()
+
+module_name = pkg['name']
+module_semver = f'^{pkg['version']}'
+module_version = pkg['version']

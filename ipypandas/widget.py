@@ -19,7 +19,7 @@ from traitlets import Instance, Unicode, Integer, observe
 from IPython.display import display
 from IPython.core.getipython import get_ipython
 
-from .version import module_semver, module_name
+from .version import module_version, module_semver, module_name
 
 
 @register
@@ -126,7 +126,7 @@ class PandasWidget(DOMWidget):
 
     @observe('sync_down')
     def update(self, change):
-        self.log('info', '------------ host update ------------')
+        self.log('info', f'------ host update ({module_name} v{module_version}) ------')
         event = change.new.split('-')[0]
 
         # copy original data
@@ -311,7 +311,7 @@ class PandasWidget(DOMWidget):
         # send log message to client
         self.log_msg = json.dumps({
             'date': f'{datetime.now().timestamp() * 1000:.0f}',
-            'source': 'ipypandas, widget.py',
+            'source': 'widget.py',
             'level': levels[level],
             'message': message
         })
@@ -329,16 +329,16 @@ def formatter():
 
 
 def enable(**kwargs):
-    ipy_fmt = formatter()
-    if ipy_fmt is None:
+    fmt = formatter()
+    if fmt is None:
         return
-    ipy_fmt.for_type(pd.DataFrame, lambda df: display(PandasWidget(df=df, **kwargs)))
-    ipy_fmt.for_type(Styler, lambda styler: display(PandasWidget(styler=styler, **kwargs)))
+    fmt.for_type(pd.DataFrame, lambda df: display(PandasWidget(df=df, **kwargs)))
+    fmt.for_type(Styler, lambda styler: display(PandasWidget(styler=styler, **kwargs)))
 
 
 def disable():
-    ipy_fmt = formatter()
-    if ipy_fmt is None:
+    fmt = formatter()
+    if fmt is None:
         return
-    ipy_fmt.type_printers.pop(pd.DataFrame, None)
-    ipy_fmt.type_printers.pop(Styler, None)
+    fmt.type_printers.pop(pd.DataFrame, None)
+    fmt.type_printers.pop(Styler, None)

@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
-import { MODULE_SEMVER, MODULE_NAME } from './version';
+import { MODULE_VERSION, MODULE_SEMVER, MODULE_NAME } from './version';
 
 import $ from 'jquery';
 import '../src/styles/index.css';
@@ -407,7 +407,7 @@ export class PandasView extends DOMWidgetView {
     }
 
     update_data(): void {
-        this.log('info', '----------- client update -----------');
+        this.log('info', `------ client update (${MODULE_NAME} v${MODULE_VERSION}) ------`);
 
         // hide root
         const root = $(this.el);
@@ -732,7 +732,7 @@ export class PandasView extends DOMWidgetView {
             this,
             JSON.stringify({
                 date: `${Date.now()}`,
-                source: 'ipypandas, widget.ts',
+                source: 'widget.ts',
                 level: levels[level],
                 message: message
             })
