@@ -1,6 +1,12 @@
 
 # ipypandas
 
+[![Build](https://github.com/tensorware/ipypandas/actions/workflows/build.yml/badge.svg)](https://github.com/tensorware/ipypandas/actions/workflows/build.yml)
+[![Release](https://github.com/tensorware/ipypandas/actions/workflows/release.yml/badge.svg)](https://github.com/tensorware/ipypandas/actions/workflows/release.yml)
+[![NPM](https://img.shields.io/npm/v/ipypandas?label=NPM%20Package)](https://www.npmjs.com/package/ipypandas)
+[![PyPI](https://img.shields.io/pypi/v/ipypandas?label=PyPI%20Package)](https://pypi.org/project/ipypandas)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tensorware/ipypandas/main?labpath=examples%2Finstallation.ipynb)
+
 <a href="https://github.com/tensorware/ipypandas">
     <img src="https://raw.githubusercontent.com/tensorware/ipypandas/main/docs/source/static/images/logo.png" width="100"/>
 </a>
