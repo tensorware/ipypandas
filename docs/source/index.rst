@@ -2,7 +2,7 @@
 ipypandas
 =====================================
 
-Version: |release|
+**Version**: |release|, **Date**: |today|
 
 .. note::
 
