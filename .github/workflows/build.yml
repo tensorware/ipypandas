@@ -37,17 +37,17 @@ jobs:
                   jlpm run test
 
             - name: Build Documentation
-              if: ${{ matrix.os == 'ubuntu-latest' }}
+              if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12' }}
               working-directory: docs
               run: |
                   sudo apt install -y pandoc
                   make html
 
             - name: Store Documentation
-              if: ${{ matrix.os == 'ubuntu-latest' }}
+              if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12' }}
               uses: actions/upload-pages-artifact@v3
               with:
-                  path: docs/build/html/
+                  path: docs/build/html
     docs:
         runs-on: ubuntu-latest
         needs: build

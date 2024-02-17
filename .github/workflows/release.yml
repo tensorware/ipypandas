@@ -52,7 +52,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: docs-package
-                  path: docs/build/html/
+                  path: docs/build/html
     pypi:
         runs-on: ubuntu-latest
         needs: build
