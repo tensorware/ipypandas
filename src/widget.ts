@@ -40,13 +40,24 @@ export class PandasModel extends DOMWidgetModel {
 
 export class PandasView extends DOMWidgetView {
     render(): void {
-        const classes = ['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted', 'pd-ipypandas'];
+        const classes = [];
+
+        // init jupyter classes
+        classes.push(['jp-RenderedHTMLCommon', 'jp-RenderedHTML', 'jp-OutputArea-output', 'jp-mod-trusted']);
+
+        // init ipypandas classes
+        classes.push('pd-root');
         if (window.matchMedia('(pointer: coarse)').matches) {
             classes.push('pd-touch');
         }
-        this.el.classList.add(...classes);
 
-        // init view
+        // add root classes
+        const root = $(this.el);
+        classes.forEach((cls) => {
+            root.addClass(cls);
+        });
+
+        // update initial view
         this.update_data();
 
         // register change events
@@ -409,7 +420,7 @@ export class PandasView extends DOMWidgetView {
     update_data(): void {
         this.log('info', `------ client update (${MODULE_NAME} v${MODULE_VERSION}) ------`);
 
-        // hide root
+        // reset root
         const root = $(this.el);
         root.css({
             '--pd-root-opacity': '0',
@@ -418,131 +429,19 @@ export class PandasView extends DOMWidgetView {
         });
         root.empty();
 
-        // append view
-        const view = this.get_view();
-        root.append(view);
+        $.when(root).then(() => {
+            const container = root.parent();
+            if (!container.hasClass('pd-ipypandas')) {
+                container.addClass('pd-ipypandas');
+            }
 
-        // append footer
-        const footer = this.get_footer();
-        root.append(footer);
+            // append view
+            const view = this.get_view();
+            root.append(view);
 
-        // update table
-        this.update_table();
-
-        // update viewport
-        this.update_view();
-
-        // update footer
-        this.update_footer();
-
-        // handle view events
-        $.when(view).then(() => {
-            view.on('dragstart', (e: JQuery.DragStartEvent) => {
-                view.data('dragged', $(e.target).closest('.pd-col-head'));
-            });
-            view.on('dragover', (e: JQuery.DragOverEvent) => {
-                const dragged = view.data('dragged');
-                if (!dragged) {
-                    return;
-                }
-
-                // remove dragover class
-                view.find('.pd-col-head').removeClass('pd-dragover');
-
-                // add dragover class
-                $(e.target).closest('.pd-col-head').addClass('pd-dragover');
-
-                // prevent default behavior
-                e.preventDefault();
-                e.stopPropagation();
-            });
-            view.on('drop', (e: JQuery.DropEvent) => {
-                const dragged = view.data('dragged');
-                const dropped = $(e.target).closest('.pd-col-head');
-                if (!dragged.is('.pd-col-head') || !dropped.is('.pd-col-head') || dragged.is(dropped)) {
-                    return;
-                }
-                view.removeData('dragged');
-
-                // reorder columns
-                $(dragged).insertAfter(dropped);
-                if (this.on_reorder(view)) {
-                    this.sync_down('reorder');
-                }
-            });
-            view.on('dragend', (e: JQuery.DragEndEvent) => {
-                view.find('.pd-col-head').removeClass('pd-dragover');
-            });
-            view.on('scroll', (e: JQuery.ScrollEvent) => {
-                this.compress('scroll', () => {
-                    const target = $(e.target);
-
-                    // remove open filter
-                    root.find('.pd-filter').remove();
-                    root.find('.pd-col-head').removeClass('pd-filter-active');
-
-                    // vertical or horizontal scrolling
-                    if (this.on_scroll(target)) {
-                        this.sync_down('scroll');
-                    }
-                });
-            });
-            view.on('click', (e: JQuery.ClickEvent) => {
-                const target = $(e.target);
-
-                // remove open filter
-                const filter = root.find('.pd-filter').remove();
-                root.find('.pd-col-head').removeClass('pd-filter-active');
-
-                // column header clicked
-                const col_head = target.closest('.pd-col-head:not([colspan])');
-                if (col_head.length) {
-                    this.on_rescale(col_head);
-
-                    const col_filter = target.closest('.pd-col-i-filter');
-                    if (col_filter.length) {
-                        if (!filter.length) {
-                            root.append(this.get_filter(col_head));
-                            col_head.addClass('pd-filter-active');
-                        }
-                    } else {
-                        if (this.on_sort(col_head)) {
-                            this.sync_down('sort');
-                        }
-                    }
-                    return;
-                }
-
-                // row index clicked
-                const row_head = target.closest('.pd-row-head:not([rowspan])');
-                if (row_head.length) {
-                    if (this.on_select(row_head.parent().find('.pd-row-head'))) {
-                        this.sync_down('select');
-                    }
-                    return;
-                }
-
-                // resize handler clicked
-                if (target.is('.pd-view')) {
-                    if (this.on_resize(target)) {
-                        this.sync_down('resize');
-                    }
-                    return;
-                }
-            });
-
-            // show root
-            root.css({
-                '--pd-root-opacity': '1',
-                '--pd-root-cursor': 'auto',
-                '--pd-root-min-height': 'initial'
-            });
-
-            // set viewport range
-            this.set_range(view);
-
-            // set viewport height
-            this.set_height(view);
+            // append footer
+            const footer = this.get_footer();
+            root.append(footer);
 
             // update table
             this.update_table();
@@ -552,21 +451,140 @@ export class PandasView extends DOMWidgetView {
 
             // update footer
             this.update_footer();
-        });
 
-        // handle footer events
-        $.when(footer).then(() => {
-            footer.on('keyup', (e: JQuery.KeyUpEvent) => {
-                const target = $(e.target);
-                const enter = e.key === 'Enter';
-
-                // search box query
-                const search = target.closest('.pd-search');
-                if (search.length) {
-                    if (this.on_search(target) && enter) {
-                        this.sync_down('search');
+            // handle view events
+            $.when(view).then(() => {
+                view.on('dragstart', (e: JQuery.DragStartEvent) => {
+                    view.data('dragged', $(e.target).closest('.pd-col-head'));
+                });
+                view.on('dragover', (e: JQuery.DragOverEvent) => {
+                    const dragged = view.data('dragged');
+                    if (!dragged) {
+                        return;
                     }
-                }
+
+                    // remove dragover class
+                    view.find('.pd-col-head').removeClass('pd-dragover');
+
+                    // add dragover class
+                    $(e.target).closest('.pd-col-head').addClass('pd-dragover');
+
+                    // prevent default behavior
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                view.on('drop', (e: JQuery.DropEvent) => {
+                    const dragged = view.data('dragged');
+                    const dropped = $(e.target).closest('.pd-col-head');
+                    if (!dragged.is('.pd-col-head') || !dropped.is('.pd-col-head') || dragged.is(dropped)) {
+                        return;
+                    }
+                    view.removeData('dragged');
+
+                    // reorder columns
+                    $(dragged).insertAfter(dropped);
+                    if (this.on_reorder(view)) {
+                        this.sync_down('reorder');
+                    }
+                });
+                view.on('dragend', (e: JQuery.DragEndEvent) => {
+                    view.find('.pd-col-head').removeClass('pd-dragover');
+                });
+                view.on('scroll', (e: JQuery.ScrollEvent) => {
+                    this.compress('scroll', () => {
+                        const target = $(e.target);
+
+                        // remove open filter
+                        root.find('.pd-filter').remove();
+                        root.find('.pd-col-head').removeClass('pd-filter-active');
+
+                        // vertical or horizontal scrolling
+                        if (this.on_scroll(target)) {
+                            this.sync_down('scroll');
+                        }
+                    });
+                });
+                view.on('click', (e: JQuery.ClickEvent) => {
+                    const target = $(e.target);
+
+                    // remove open filter
+                    const filter = root.find('.pd-filter').remove();
+                    root.find('.pd-col-head').removeClass('pd-filter-active');
+
+                    // column header clicked
+                    const col_head = target.closest('.pd-col-head:not([colspan])');
+                    if (col_head.length) {
+                        this.on_rescale(col_head);
+
+                        const col_filter = target.closest('.pd-col-i-filter');
+                        if (col_filter.length) {
+                            if (!filter.length) {
+                                root.append(this.get_filter(col_head));
+                                col_head.addClass('pd-filter-active');
+                            }
+                        } else {
+                            if (this.on_sort(col_head)) {
+                                this.sync_down('sort');
+                            }
+                        }
+                        return;
+                    }
+
+                    // row index clicked
+                    const row_head = target.closest('.pd-row-head:not([rowspan])');
+                    if (row_head.length) {
+                        if (this.on_select(row_head.parent().find('.pd-row-head'))) {
+                            this.sync_down('select');
+                        }
+                        return;
+                    }
+
+                    // resize handler clicked
+                    if (target.is('.pd-view')) {
+                        if (this.on_resize(target)) {
+                            this.sync_down('resize');
+                        }
+                        return;
+                    }
+                });
+
+                // show root
+                root.css({
+                    '--pd-root-opacity': '1',
+                    '--pd-root-cursor': 'auto',
+                    '--pd-root-min-height': 'initial'
+                });
+
+                // set viewport range
+                this.set_range(view);
+
+                // set viewport height
+                this.set_height(view);
+
+                // update table
+                this.update_table();
+
+                // update viewport
+                this.update_view();
+
+                // update footer
+                this.update_footer();
+            });
+
+            // handle footer events
+            $.when(footer).then(() => {
+                footer.on('keyup', (e: JQuery.KeyUpEvent) => {
+                    const target = $(e.target);
+                    const enter = e.key === 'Enter';
+
+                    // search box query
+                    const search = target.closest('.pd-search');
+                    if (search.length) {
+                        if (this.on_search(target) && enter) {
+                            this.sync_down('search');
+                        }
+                    }
+                });
             });
         });
     }
@@ -612,13 +630,15 @@ export class PandasView extends DOMWidgetView {
             });
         }
 
-        // set row index position
+        // set index name position
         let offset_index = -1;
         view.find('th.pd-index').each((i: number, th: HTMLElement) => {
             const left = $(th).position().left;
             offset_index = offset_index < 0 ? left : offset_index;
             $(th).css({ left: `${left - offset_index}px` });
         });
+
+        // set index value position
         let offset_row = -1;
         view.find('th.pd-row-head').each((i: number, th: HTMLElement) => {
             const left = $(th).position().left;
@@ -626,11 +646,13 @@ export class PandasView extends DOMWidgetView {
             $(th).css({ left: `${left - offset_row}px` });
         });
 
-        // update colors
-        const head_color = col_heads.css('background-color');
+        // update header color
+        const head_color = this.background_color(col_heads);
         if (head_color && !head_color.includes('rgba(0, 0, 0, 0)')) {
             root.css({ '--pd-header-color': head_color });
         }
+
+        // update index color
         const select_color = root.css('--pd-body-tr-select-color');
         if (select_color && select_color.includes('rgba')) {
             const bg_color = this.hex_to_rgb(root.css('--pd-header-color'));
@@ -685,6 +707,14 @@ export class PandasView extends DOMWidgetView {
         const classes = (target.attr('class') || '').split(/\s+/);
         const result = $.grep(classes, (x) => x.indexOf(match) === 0).join();
         return result.split('-').pop() || '';
+    }
+
+    background_color(el: JQuery<HTMLElement>) {
+        const elements = el.parents().addBack();
+        const parents = elements.filter((i: number, p: HTMLElement) => {
+            return !['', 'transparent', 'rgba(0, 0, 0, 0)'].includes($(p).css('background-color'));
+        });
+        return parents.last().css('background-color');
     }
 
     rgba_to_rgb(fgrgba: string, bgrgb: string): string {
