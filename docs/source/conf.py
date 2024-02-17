@@ -22,7 +22,7 @@ from ipypandas.version import package
 pkg = package()
 project = pkg['name']
 version = pkg['version']
-release = f'v{pkg['version']}'
+release = f'v{pkg["version"]}'
 author = pkg['author']['name']
 repository = pkg['repository']['url']
 pypi = f'https://pypi.org/project/{project}'

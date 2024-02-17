@@ -19,5 +19,5 @@ def package():
 pkg = package()
 
 module_name = pkg['name']
-module_semver = f'^{pkg['version']}'
+module_semver = f'^{pkg["version"]}'
 module_version = pkg['version']
