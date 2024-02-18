@@ -19,7 +19,7 @@ from traitlets import Instance, Unicode, Integer, observe
 from IPython.display import display
 from IPython.core.getipython import get_ipython
 
-from .version import module_version, module_semver, module_name
+from .version import module_name, module_version, module_semver
 
 
 @register

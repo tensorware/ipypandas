@@ -5,7 +5,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from .widget import PandasWidget, formatter, enable, disable
-from .version import module_version, module_semver, module_name
+from .version import module_name, module_version, module_semver
 
 
 # called by jupyter lab to detect labextension and to install the widget
