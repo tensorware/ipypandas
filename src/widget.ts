@@ -3,6 +3,8 @@
 
 import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
 import { MODULE_NAME, MODULE_VERSION, MODULE_SEMVER } from './version';
+import * as utils from './utils';
+
 import '../src/styles/index.css';
 import $ from 'jquery';
 
@@ -60,9 +62,9 @@ export class PandasView extends DOMWidgetView {
         this.update_data();
 
         // register change events
-        this.model.on('change:log_msg', this.log_msg, this);
-        this.model.on('change:sync_up', this.reset_data, this);
         this.model.on('change:view', this.update_data, this);
+        this.model.on('change:sync_up', this.reset_data, this);
+        this.model.on('change:log_msg', utils.log_msg, this);
     }
 
     sync_down(event: string): void {
@@ -155,16 +157,16 @@ export class PandasView extends DOMWidgetView {
         const load_lazy = max_rows > 0 && n_rows > max_rows;
 
         // screen height is used as maximum viewport size
-        const window_rows = this.round_to(window.screen.height, row_height) / row_height;
+        const window_rows = utils.round_to(window.screen.height, row_height) / row_height;
         const margin_rows = Math.round(window_rows * scale);
 
         // scroll row position is used as center position
         const scroll_top = this.model.get('_scroll_top') || 0;
-        const scroll_row = this.clamp_value(this.round_to(scroll_top, row_height) / row_height, 0, n_rows);
+        const scroll_row = utils.clamp_value(utils.round_to(scroll_top, row_height) / row_height, 0, n_rows);
 
         // calculate start and end row
-        const start_row = !load_lazy ? 0 : this.clamp_value(scroll_row - margin_rows, 0, n_rows);
-        const end_row = !load_lazy ? n_rows : this.clamp_value(scroll_row + margin_rows, 0, n_rows);
+        const start_row = !load_lazy ? 0 : utils.clamp_value(scroll_row - margin_rows, 0, n_rows);
+        const end_row = !load_lazy ? n_rows : utils.clamp_value(scroll_row + margin_rows, 0, n_rows);
 
         return {
             start_row: start_row || 0,
@@ -325,10 +327,10 @@ export class PandasView extends DOMWidgetView {
     }
 
     on_sort(th: JQuery<HTMLElement>): boolean {
-        this.class_rotate(th, ['pd-sort-desc', 'pd-sort-asc', '']);
+        utils.class_rotate(th, ['pd-sort-desc', 'pd-sort-asc', '']);
 
         const idx = th.css('--pd-df-iloc');
-        const sort = this.class_suffix(th, 'pd-sort');
+        const sort = utils.class_suffix(th, 'pd-sort');
         const state_cols = JSON.parse(this.model.get('state_cols'));
 
         // create object
@@ -353,10 +355,10 @@ export class PandasView extends DOMWidgetView {
     }
 
     on_select(th: JQuery<HTMLElement>): boolean {
-        this.class_rotate(th, ['pd-select-active', '']);
+        utils.class_rotate(th, ['pd-select-active', '']);
 
         const idx = th.css('--pd-df-iloc');
-        const select = this.class_suffix(th, 'pd-select');
+        const select = utils.class_suffix(th, 'pd-select');
         const state_rows = JSON.parse(this.model.get('state_rows'));
 
         // create object
@@ -669,14 +671,14 @@ export class PandasView extends DOMWidgetView {
         });
 
         // update header styles
-        root.css({ '--pd-header-color': this.background_color(col_heads) });
+        root.css({ '--pd-header-color': utils.rgba_background(col_heads) });
         root.css({ '--pd-border-color': head.css('border-bottom-color') });
 
         // update index styles
         const select_color = root.css('--pd-body-tr-select-color');
         if (select_color && select_color.includes('rgba')) {
-            const bg_color = this.hex_to_rgb(root.css('--pd-header-color'));
-            root.css({ '--pd-body-tr-select-color': this.rgba_to_rgb(select_color, bg_color) });
+            const bg_color = utils.hex_to_rgb(root.css('--pd-header-color'));
+            root.css({ '--pd-body-tr-select-color': utils.rgba_to_rgb(select_color, bg_color) });
         }
     }
 
@@ -702,69 +704,6 @@ export class PandasView extends DOMWidgetView {
         footer.css({ '--pd-footer-max-width': `${table.width() || 0}px` });
     }
 
-    class_rotate(target: JQuery<HTMLElement>, classes: string[]): string {
-        for (let i = 0; i < classes.length; i++) {
-            if (target.hasClass(classes[i])) {
-                // remove old class
-                target.removeClass(classes[i]);
-
-                // add new class
-                i = i >= classes.length ? 0 : i + 1;
-                if (classes[i]) {
-                    target.addClass(classes[i]);
-                }
-
-                return classes[i];
-            }
-        }
-
-        // default class
-        target.addClass(classes[0]);
-        return classes[0];
-    }
-
-    class_suffix(target: JQuery<HTMLElement>, match: string): string {
-        const classes = (target.attr('class') || '').split(/\s+/);
-        const result = $.grep(classes, (x) => x.indexOf(match) === 0).join();
-        return result.split('-').pop() || '';
-    }
-
-    background_color(el: JQuery<HTMLElement>) {
-        const elements = el.parents().addBack();
-        const parents = elements.filter((i: number, p: HTMLElement) => {
-            return !['', 'undefined', 'transparent', 'rgba(0, 0, 0, 0)'].includes($(p).css('background-color'));
-        });
-        return parents.last().css('background-color');
-    }
-
-    rgba_to_rgb(fgrgba: string, bgrgb: string): string {
-        const [fgr, fgg, fgb, fga] = $.map(fgrgba.substring(fgrgba.indexOf('(') + 1, fgrgba.lastIndexOf(')')).split(/,\s*/), Number);
-        const [bgr, bgg, bgb] = $.map(bgrgb.substring(bgrgb.indexOf('(') + 1, bgrgb.lastIndexOf(')')).split(/,\s*/), Number);
-        const fgrgb = {
-            r: Math.round((fga * (fgr / 255) + (1 - fga) * (bgr / 255)) * 255),
-            g: Math.round((fga * (fgg / 255) + (1 - fga) * (bgg / 255)) * 255),
-            b: Math.round((fga * (fgb / 255) + (1 - fga) * (bgb / 255)) * 255)
-        };
-        return `rgb(${fgrgb.r}, ${fgrgb.g}, ${fgrgb.b})`;
-    }
-
-    hex_to_rgb(hex: string): string {
-        if (!hex.includes('#')) {
-            return hex;
-        }
-        const str = hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => '#' + r + r + g + g + b + b);
-        const [r, g, b] = (str.substring(1).match(/.{2}/g) || []).map((x) => parseInt(x, 16));
-        return `rgb(${r}, ${g}, ${b})`;
-    }
-
-    clamp_value(value: number, min: number, max: number): number {
-        return Math.min(Math.max(value, min), max);
-    }
-
-    round_to(value: number, multiple: number): number {
-        return multiple * Math.round(value / multiple);
-    }
-
     compress(event: string, handler: TimerHandler, delay = 200): void {
         const timers = this.compress as any;
         clearTimeout(timers[event] || -1);
@@ -778,7 +717,7 @@ export class PandasView extends DOMWidgetView {
         }
 
         // send log message to console
-        this.log_msg(
+        utils.log_msg(
             this,
             JSON.stringify({
                 date: `${Date.now()}`,
@@ -787,28 +726,5 @@ export class PandasView extends DOMWidgetView {
                 message: message
             })
         );
-    }
-
-    log_msg(ctx: object, json: string): void {
-        const log = JSON.parse(json);
-        const date = new Date(parseInt(log.date)).toLocaleString();
-
-        const msg = `${date}, ${log.source}: ${log.message}`;
-        switch (log.level) {
-            case 0:
-                console.debug(msg);
-                break;
-            case 1:
-                console.info(msg);
-                break;
-            case 2:
-                console.warn(msg);
-                break;
-            case 3:
-                console.error(msg);
-                break;
-            default:
-                console.log(msg);
-        }
     }
 }
