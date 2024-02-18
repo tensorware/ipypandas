@@ -1,6 +1,6 @@
 {
     "name": "ipypandas",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "Interactive JupyterLab features for the python data analysis library pandas.",
     "keywords": [
         "widgets",
