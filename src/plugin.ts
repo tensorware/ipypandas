@@ -17,13 +17,13 @@ const plugin: IPlugin<Application<Widget>, void> = {
         class PandasView extends PandasViewBase {
             render() {
                 if (manager) {
-                    manager.themeChanged.connect(this.reset_styles, this);
+                    manager.themeChanged.connect(this.update_data, this);
                 }
                 super.render();
             }
             remove() {
                 if (manager) {
-                    manager.themeChanged.disconnect(this.reset_styles, this);
+                    manager.themeChanged.disconnect(this.update_data, this);
                 }
                 super.remove();
             }

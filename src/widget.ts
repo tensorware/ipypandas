@@ -399,14 +399,128 @@ export class PandasView extends DOMWidgetView {
         return true;
     }
 
-    reset_styles(): void {
+    attach_scroll(view: JQuery<HTMLElement>): void {
         const root = $(this.el);
 
-        // reset style variables
-        root.css({ '--pd-header-color': '', '--pd-border-color': '', '--pd-body-tr-select-color': '' });
+        view.on('scroll', (e: JQuery.ScrollEvent) => {
+            this.compress('scroll', () => {
+                const target = $(e.target);
 
-        // update view
-        this.update_data();
+                // remove open filter
+                root.find('.pd-filter').remove();
+                root.find('.pd-col-head').removeClass('pd-filter-active');
+
+                // vertical or horizontal scrolling
+                if (this.on_scroll(target)) {
+                    this.sync_down('scroll');
+                }
+            });
+        });
+    }
+
+    attach_drag(view: JQuery<HTMLElement>): void {
+        view.on('dragstart', (e: JQuery.DragStartEvent) => {
+            view.data('dragged', $(e.target).closest('.pd-col-head'));
+        });
+
+        view.on('dragover', (e: JQuery.DragOverEvent) => {
+            const dragged = view.data('dragged');
+            if (!dragged) {
+                return;
+            }
+
+            // remove dragover class
+            view.find('.pd-col-head').removeClass('pd-dragover');
+
+            // add dragover class
+            $(e.target).closest('.pd-col-head').addClass('pd-dragover');
+
+            // prevent default behavior
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        view.on('drop', (e: JQuery.DropEvent) => {
+            const dragged = view.data('dragged');
+            const dropped = $(e.target).closest('.pd-col-head');
+            if (!dragged.is('.pd-col-head') || !dropped.is('.pd-col-head') || dragged.is(dropped)) {
+                return;
+            }
+            view.removeData('dragged');
+
+            // reorder columns
+            $(dragged).insertAfter(dropped);
+            if (this.on_reorder(view)) {
+                this.sync_down('reorder');
+            }
+        });
+
+        view.on('dragend', (e: JQuery.DragEndEvent) => {
+            view.find('.pd-col-head').removeClass('pd-dragover');
+        });
+    }
+
+    attach_click(view: JQuery<HTMLElement>): void {
+        const root = $(this.el);
+
+        view.on('click', (e: JQuery.ClickEvent) => {
+            const target = $(e.target);
+
+            // remove open filter
+            const filter = root.find('.pd-filter').remove();
+            root.find('.pd-col-head').removeClass('pd-filter-active');
+
+            // column header clicked
+            const col_head = target.closest('.pd-col-head:not([colspan])');
+            if (col_head.length) {
+                this.on_rescale(col_head);
+
+                const col_filter = target.closest('.pd-col-i-filter');
+                if (col_filter.length) {
+                    if (!filter.length) {
+                        root.append(this.get_filter(col_head));
+                        col_head.addClass('pd-filter-active');
+                    }
+                } else {
+                    if (this.on_sort(col_head)) {
+                        this.sync_down('sort');
+                    }
+                }
+                return;
+            }
+
+            // row index clicked
+            const row_head = target.closest('.pd-row-head:not([rowspan])');
+            if (row_head.length) {
+                if (this.on_select(row_head.parent().find('.pd-row-head'))) {
+                    this.sync_down('select');
+                }
+                return;
+            }
+
+            // resize handler clicked
+            if (target.is('.pd-view')) {
+                if (this.on_resize(target)) {
+                    this.sync_down('resize');
+                }
+                return;
+            }
+        });
+    }
+
+    attach_input(footer: JQuery<HTMLElement>): void {
+        footer.on('keyup', (e: JQuery.KeyUpEvent) => {
+            const target = $(e.target);
+            const enter = e.key === 'Enter';
+
+            // search box query
+            const search = target.closest('.pd-search');
+            if (search.length) {
+                if (this.on_search(target) && enter) {
+                    this.sync_down('search');
+                }
+            }
+        });
     }
 
     reset_data(): void {
@@ -431,12 +545,16 @@ export class PandasView extends DOMWidgetView {
     update_data(): void {
         this.log('info', `------ client update (${MODULE_NAME} v${MODULE_VERSION}) ------`);
 
-        // reset root
+        // reset root styles
         const root = $(this.el);
         root.css({
             '--pd-root-opacity': '0',
             '--pd-root-cursor': 'wait',
             '--pd-root-min-height': `${root.height() || 0}px`
+        }).css({
+            '--pd-header-color': '',
+            '--pd-border-color': '',
+            '--pd-body-tr-select-color': ''
         });
 
         $.when(root).then(() => {
@@ -453,110 +571,11 @@ export class PandasView extends DOMWidgetView {
             // update container
             this.update_container();
 
-            // update table
-            this.update_table();
-
-            // update viewport
-            this.update_view();
-
-            // update footer
-            this.update_footer();
-
-            // handle view events
+            // attach view events
             $.when(view).then(() => {
-                view.on('dragstart', (e: JQuery.DragStartEvent) => {
-                    view.data('dragged', $(e.target).closest('.pd-col-head'));
-                });
-                view.on('dragover', (e: JQuery.DragOverEvent) => {
-                    const dragged = view.data('dragged');
-                    if (!dragged) {
-                        return;
-                    }
-
-                    // remove dragover class
-                    view.find('.pd-col-head').removeClass('pd-dragover');
-
-                    // add dragover class
-                    $(e.target).closest('.pd-col-head').addClass('pd-dragover');
-
-                    // prevent default behavior
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-                view.on('drop', (e: JQuery.DropEvent) => {
-                    const dragged = view.data('dragged');
-                    const dropped = $(e.target).closest('.pd-col-head');
-                    if (!dragged.is('.pd-col-head') || !dropped.is('.pd-col-head') || dragged.is(dropped)) {
-                        return;
-                    }
-                    view.removeData('dragged');
-
-                    // reorder columns
-                    $(dragged).insertAfter(dropped);
-                    if (this.on_reorder(view)) {
-                        this.sync_down('reorder');
-                    }
-                });
-                view.on('dragend', (e: JQuery.DragEndEvent) => {
-                    view.find('.pd-col-head').removeClass('pd-dragover');
-                });
-                view.on('scroll', (e: JQuery.ScrollEvent) => {
-                    this.compress('scroll', () => {
-                        const target = $(e.target);
-
-                        // remove open filter
-                        root.find('.pd-filter').remove();
-                        root.find('.pd-col-head').removeClass('pd-filter-active');
-
-                        // vertical or horizontal scrolling
-                        if (this.on_scroll(target)) {
-                            this.sync_down('scroll');
-                        }
-                    });
-                });
-                view.on('click', (e: JQuery.ClickEvent) => {
-                    const target = $(e.target);
-
-                    // remove open filter
-                    const filter = root.find('.pd-filter').remove();
-                    root.find('.pd-col-head').removeClass('pd-filter-active');
-
-                    // column header clicked
-                    const col_head = target.closest('.pd-col-head:not([colspan])');
-                    if (col_head.length) {
-                        this.on_rescale(col_head);
-
-                        const col_filter = target.closest('.pd-col-i-filter');
-                        if (col_filter.length) {
-                            if (!filter.length) {
-                                root.append(this.get_filter(col_head));
-                                col_head.addClass('pd-filter-active');
-                            }
-                        } else {
-                            if (this.on_sort(col_head)) {
-                                this.sync_down('sort');
-                            }
-                        }
-                        return;
-                    }
-
-                    // row index clicked
-                    const row_head = target.closest('.pd-row-head:not([rowspan])');
-                    if (row_head.length) {
-                        if (this.on_select(row_head.parent().find('.pd-row-head'))) {
-                            this.sync_down('select');
-                        }
-                        return;
-                    }
-
-                    // resize handler clicked
-                    if (target.is('.pd-view')) {
-                        if (this.on_resize(target)) {
-                            this.sync_down('resize');
-                        }
-                        return;
-                    }
-                });
+                this.attach_drag(view);
+                this.attach_click(view);
+                this.attach_scroll(view);
 
                 // show root
                 root.css({
@@ -565,36 +584,19 @@ export class PandasView extends DOMWidgetView {
                     '--pd-root-min-height': 'initial'
                 });
 
-                // set viewport range
+                // set viewport
                 this.set_range(view);
-
-                // set viewport height
                 this.set_height(view);
 
-                // update table
+                // update elements
                 this.update_table();
-
-                // update viewport
                 this.update_view();
-
-                // update footer
                 this.update_footer();
             });
 
-            // handle footer events
+            // attach footer events
             $.when(footer).then(() => {
-                footer.on('keyup', (e: JQuery.KeyUpEvent) => {
-                    const target = $(e.target);
-                    const enter = e.key === 'Enter';
-
-                    // search box query
-                    const search = target.closest('.pd-search');
-                    if (search.length) {
-                        if (this.on_search(target) && enter) {
-                            this.sync_down('search');
-                        }
-                    }
-                });
+                this.attach_input(footer);
             });
         });
     }
