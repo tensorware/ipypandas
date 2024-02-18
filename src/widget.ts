@@ -427,13 +427,9 @@ export class PandasView extends DOMWidgetView {
             '--pd-root-cursor': 'wait',
             '--pd-root-min-height': `${root.height() || 0}px`
         });
-        root.empty();
 
         $.when(root).then(() => {
-            const container = root.parent();
-            if (!container.hasClass('pd-ipypandas')) {
-                container.addClass('pd-ipypandas');
-            }
+            root.empty();
 
             // append view
             const view = this.get_view();
@@ -442,6 +438,9 @@ export class PandasView extends DOMWidgetView {
             // append footer
             const footer = this.get_footer();
             root.append(footer);
+
+            // update container
+            this.update_container();
 
             // update table
             this.update_table();
@@ -589,6 +588,19 @@ export class PandasView extends DOMWidgetView {
         });
     }
 
+    update_container(): void {
+        const root = $(this.el);
+        const container = root.parent();
+
+        // initialize container styles
+        if (!container.hasClass('pd-ipypandas')) {
+            container.addClass('pd-ipypandas');
+
+            // remove vscode styles (https://github.com/microsoft/vscode-jupyter/issues/7161#issuecomment-1433728616)
+            root.parents('.cell-output-ipywidget-background').removeClass('cell-output-ipywidget-background');
+        }
+    }
+
     update_table(): void {
         const root = $(this.el);
         const view = root.children('.pd-view');
@@ -712,7 +724,7 @@ export class PandasView extends DOMWidgetView {
     background_color(el: JQuery<HTMLElement>) {
         const elements = el.parents().addBack();
         const parents = elements.filter((i: number, p: HTMLElement) => {
-            return !['', 'transparent', 'rgba(0, 0, 0, 0)'].includes($(p).css('background-color'));
+            return !['', 'undefined', 'transparent', 'rgba(0, 0, 0, 0)'].includes($(p).css('background-color'));
         });
         return parents.last().css('background-color');
     }
