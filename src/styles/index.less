@@ -8,16 +8,16 @@
     --pd-view-min-height: 0px;
     --pd-view-max-height: 0px;
 
-    --pd-header-color: rgba(0, 0, 0, 0);
-    --pd-border-color: rgba(0, 0, 0, 0);
     --pd-border-width: 1px;
+    --pd-border-color: initial;
+    --pd-header-color: initial;
 
     --pd-body-padding-top: 0px;
     --pd-body-padding-bottom: 0px;
     --pd-body-td-max-width: 1ch;
 
-    --pd-body-th-dragover-color: var(--jp-rendermime-table-row-hover-background, transparent);
-    --pd-body-tr-select-color: var(--jp-rendermime-table-row-hover-background, transparent);
+    --pd-body-th-drag-color: var(--jp-rendermime-table-row-hover-background, initial);
+    --pd-body-tr-select-color: var(--jp-rendermime-table-row-hover-background, initial);
 
     --pd-footer-padding-top: 12px;
     --pd-footer-padding-bottom: 7px;
@@ -53,8 +53,11 @@
                     top: 0;
                     z-index: 2;
                     position: sticky;
-                    background-color: var(--pd-header-color);
-                    box-shadow: 0 var(--pd-border-width) var(--pd-border-color);
+
+                    &.pd-styled {
+                        background-color: var(--pd-header-color);
+                        box-shadow: 0 var(--pd-border-width) var(--pd-border-color);
+                    }
 
                     tr {
                         th.pd-col-head:not([colspan]) {
@@ -165,7 +168,7 @@
                             }
 
                             &.pd-dragover {
-                                background-color: var(--pd-body-th-dragover-color);
+                                background-color: var(--pd-body-th-drag-color);
 
                                 .pd-col-i-rescale {
                                     &::after {

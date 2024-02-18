@@ -20,26 +20,33 @@ export function hex_to_rgb(hex: string): string {
     return `rgb(${r}, ${g}, ${b})`;
 }
 
-export function rgba_to_rgb(fgrgba: string, bgrgb: string): string {
-    if (!(fgrgba || '').includes('rgba') || !(bgrgb || '').includes('rgb')) {
-        return fgrgba;
+export function rgb_to_rgba(rgb: string): string {
+    if (!(rgb || '').includes('rgb(')) {
+        return rgb;
     }
-    const [fgr, fgg, fgb, fga] = $.map(fgrgba.substring(fgrgba.indexOf('(') + 1, fgrgba.lastIndexOf(')')).split(/,\s*/), Number);
-    const [bgr, bgg, bgb] = $.map(bgrgb.substring(bgrgb.indexOf('(') + 1, bgrgb.lastIndexOf(')')).split(/,\s*/), Number);
-    const fgrgb = {
-        r: Math.round((fga * (fgr / 255) + (1 - fga) * (bgr / 255)) * 255),
-        g: Math.round((fga * (fgg / 255) + (1 - fga) * (bgg / 255)) * 255),
-        b: Math.round((fga * (fgb / 255) + (1 - fga) * (bgb / 255)) * 255)
-    };
-    return `rgb(${fgrgb.r}, ${fgrgb.g}, ${fgrgb.b})`;
+    return rgb.replace(/rgb/i, 'rgba').replace(/\)/i, ', 1.0)');
 }
 
-export function rgba_background(target: JQuery<HTMLElement>) {
+export function rgba_to_rgb(rgba_fg: string, rgb_bg: string): string {
+    if (!(rgba_fg || '').includes('rgba(') || !(rgb_bg || '').includes('rgb(')) {
+        return rgba_fg;
+    }
+    const [r_fg, g_fg, b_fg, a_fg] = $.map(rgba_fg.substring(rgba_fg.indexOf('(') + 1, rgba_fg.lastIndexOf(')')).split(/,\s*/), Number);
+    const [r_bg, g_bg, b_bg] = $.map(rgb_bg.substring(rgb_bg.indexOf('(') + 1, rgb_bg.lastIndexOf(')')).split(/,\s*/), Number);
+    const rgb_fg = {
+        r: Math.round((a_fg * (r_fg / 255) + (1 - a_fg) * (r_bg / 255)) * 255),
+        g: Math.round((a_fg * (g_fg / 255) + (1 - a_fg) * (g_bg / 255)) * 255),
+        b: Math.round((a_fg * (b_fg / 255) + (1 - a_fg) * (b_bg / 255)) * 255)
+    };
+    return `rgb(${rgb_fg.r}, ${rgb_fg.g}, ${rgb_fg.b})`;
+}
+
+export function rgba_background(target: JQuery<HTMLElement>): string {
     const elements = target.parents().addBack();
     const parents = elements.filter((i: number, p: HTMLElement) => {
         return !['', 'undefined', 'transparent', 'rgba(0, 0, 0, 0)'].includes($(p).css('background-color'));
     });
-    return parents.last().css('background-color');
+    return rgb_to_rgba(parents.last().css('background-color') || '');
 }
 
 export function class_suffix(target: JQuery<HTMLElement>, match: string): string {

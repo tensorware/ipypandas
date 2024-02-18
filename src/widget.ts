@@ -683,15 +683,24 @@ export class PandasView extends DOMWidgetView {
             $(th).css({ left: `${left - offset_row}px` });
         });
 
-        // update header styles
-        root.css({ '--pd-header-color': utils.rgba_background(col_heads) });
-        root.css({ '--pd-border-color': head.css('border-bottom-color') });
+        // update header color
+        const bg_color = utils.rgba_background(head.parent());
+        const head_color = utils.rgba_background(col_heads.last());
+        if ((bg_color || '').includes('rgba(') && (head_color || '').includes('rgba(')) {
+            const bg = bg_color.substring(0, bg_color.lastIndexOf(',')).replace(/rgba/i, 'rgb') + ')';
+            root.css({ '--pd-header-color': utils.rgba_to_rgb(head_color, bg) });
+        }
 
-        // update index styles
+        // update border color
+        const border_color = head.css('border-bottom-color');
+        root.css({ '--pd-border-color': border_color });
+        head.addClass('pd-styled');
+
+        // update index color
         const select_color = root.css('--pd-body-tr-select-color');
-        if (select_color && select_color.includes('rgba')) {
-            const bg_color = utils.hex_to_rgb(root.css('--pd-header-color'));
-            root.css({ '--pd-body-tr-select-color': utils.rgba_to_rgb(select_color, bg_color) });
+        if ((select_color || '').includes('rgba(')) {
+            const bg = root.css('--pd-header-color');
+            root.css({ '--pd-body-tr-select-color': utils.rgba_to_rgb(select_color, bg) });
         }
     }
 
