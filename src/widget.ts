@@ -399,28 +399,18 @@ export class PandasView extends DOMWidgetView {
         return true;
     }
 
-    attach_scroll(view: JQuery<HTMLElement>): void {
+    attach_drag(view: JQuery<HTMLElement>): void {
         const root = $(this.el);
 
-        view.on('scroll', (e: JQuery.ScrollEvent) => {
-            this.compress('scroll', () => {
-                const target = $(e.target);
-
-                // remove open filter
-                root.find('.pd-filter').remove();
-                root.find('.pd-col-head').removeClass('pd-filter-active');
-
-                // vertical or horizontal scrolling
-                if (this.on_scroll(target)) {
-                    this.sync_down('scroll');
-                }
-            });
-        });
-    }
-
-    attach_drag(view: JQuery<HTMLElement>): void {
         view.on('dragstart', (e: JQuery.DragStartEvent) => {
-            view.data('dragged', $(e.target).closest('.pd-col-head'));
+            const target = $(e.target);
+
+            // remove open filter
+            root.find('.pd-filter').remove();
+            root.find('.pd-col-head').removeClass('pd-filter-active');
+
+            // add dragged data
+            view.data('dragged', target.closest('.pd-col-head'));
         });
 
         view.on('dragover', (e: JQuery.DragOverEvent) => {
@@ -446,6 +436,8 @@ export class PandasView extends DOMWidgetView {
             if (!dragged.is('.pd-col-head') || !dropped.is('.pd-col-head') || dragged.is(dropped)) {
                 return;
             }
+
+            // remove dragged data
             view.removeData('dragged');
 
             // reorder columns
@@ -457,6 +449,25 @@ export class PandasView extends DOMWidgetView {
 
         view.on('dragend', (e: JQuery.DragEndEvent) => {
             view.find('.pd-col-head').removeClass('pd-dragover');
+        });
+    }
+
+    attach_scroll(view: JQuery<HTMLElement>): void {
+        const root = $(this.el);
+
+        view.on('scroll', (e: JQuery.ScrollEvent) => {
+            this.compress('scroll', () => {
+                const target = $(e.target);
+
+                // remove open filter
+                root.find('.pd-filter').remove();
+                root.find('.pd-col-head').removeClass('pd-filter-active');
+
+                // vertical or horizontal scrolling
+                if (this.on_scroll(target)) {
+                    this.sync_down('scroll');
+                }
+            });
         });
     }
 
@@ -545,7 +556,7 @@ export class PandasView extends DOMWidgetView {
     update_data(): void {
         this.log('info', `------ client update (${MODULE_NAME} v${MODULE_VERSION}) ------`);
 
-        // reset root styles
+        // reset root
         const root = $(this.el);
         root.css({
             '--pd-root-opacity': '0',
@@ -556,20 +567,15 @@ export class PandasView extends DOMWidgetView {
             '--pd-border-color': '',
             '--pd-body-tr-select-color': ''
         });
+        root.empty().off('*');
 
+        // update root
         $.when(root).then(() => {
-            root.empty();
+            this.update_container();
 
             // append view
             const view = this.get_view();
             root.append(view);
-
-            // append footer
-            const footer = this.get_footer();
-            root.append(footer);
-
-            // update container
-            this.update_container();
 
             // attach view events
             $.when(view).then(() => {
@@ -593,6 +599,10 @@ export class PandasView extends DOMWidgetView {
                 this.update_view();
                 this.update_footer();
             });
+
+            // append footer
+            const footer = this.get_footer();
+            root.append(footer);
 
             // attach footer events
             $.when(footer).then(() => {
