@@ -520,17 +520,18 @@ export class PandasView extends DOMWidgetView {
     }
 
     attach_input(footer: JQuery<HTMLElement>): void {
-        footer.on('keyup', (e: JQuery.KeyUpEvent) => {
-            const target = $(e.target);
-            const enter = e.key === 'Enter';
+        const input = footer.find('.pd-search > input');
 
-            // search box query
-            const search = target.closest('.pd-search');
-            if (search.length) {
-                if (this.on_search(target) && enter) {
+        input.on('search keyup', (e: any) => {
+            this.compress('search', () => {
+                const target = $(e.target);
+                const search = e.type === 'search' || e.key === 'Enter';
+
+                // search input query
+                if (search && this.on_search(target)) {
                     this.sync_down('search');
                 }
-            }
+            });
         });
     }
 
@@ -708,9 +709,9 @@ export class PandasView extends DOMWidgetView {
 
     update_footer(): void {
         const root = $(this.el);
-        const footer = root.children('.pd-footer');
         const view = root.children('.pd-view');
         const table = view.children('.pd-table');
+        const footer = root.children('.pd-footer');
 
         // set maximum width
         footer.css({ '--pd-footer-max-width': `${table.width() || 0}px` });
