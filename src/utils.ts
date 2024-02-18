@@ -46,7 +46,8 @@ export function rgba_background(target: JQuery<HTMLElement>): string {
     const parents = elements.filter((i: number, p: HTMLElement) => {
         return !['', 'undefined', 'transparent', 'rgba(0, 0, 0, 0)'].includes($(p).css('background-color'));
     });
-    return rgb_to_rgba(parents.last().css('background-color') || '');
+    const color = parents.last().css('background-color');
+    return rgb_to_rgba(hex_to_rgb(color || ''));
 }
 
 export function class_suffix(target: JQuery<HTMLElement>, match: string): string {

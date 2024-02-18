@@ -564,9 +564,10 @@ export class PandasView extends DOMWidgetView {
             '--pd-root-cursor': 'wait',
             '--pd-root-min-height': `${root.height() || 0}px`
         }).css({
+            '--pd-background-color': '',
             '--pd-header-color': '',
             '--pd-border-color': '',
-            '--pd-body-tr-select-color': ''
+            '--pd-select-color': ''
         });
         root.empty().off('*');
 
@@ -683,24 +684,30 @@ export class PandasView extends DOMWidgetView {
             $(th).css({ left: `${left - offset_row}px` });
         });
 
+        // update background color
+        let bg_color = utils.rgba_background(head.parent()) || utils.hex_to_rgb(root.css('--pd-background-color'));
+        if ((bg_color || '').includes('rgba(')) {
+            bg_color = bg_color.substring(0, bg_color.lastIndexOf(',')).replace(/rgba/i, 'rgb') + ')';
+        }
+        root.css({ '--pd-background-color': bg_color });
+
         // update header color
-        const bg_color = utils.rgba_background(head.parent());
-        const head_color = utils.rgba_background(col_heads.last());
-        if ((bg_color || '').includes('rgba(') && (head_color || '').includes('rgba(')) {
-            const bg = bg_color.substring(0, bg_color.lastIndexOf(',')).replace(/rgba/i, 'rgb') + ')';
+        const head_color = utils.rgba_background(col_heads);
+        if ((head_color || '').includes('rgba(')) {
+            const bg = root.css('--pd-background-color');
             root.css({ '--pd-header-color': utils.rgba_to_rgb(head_color, bg) });
         }
 
         // update border color
-        const border_color = head.css('border-bottom-color');
+        const border_color = utils.hex_to_rgb(head.css('border-bottom-color'));
         root.css({ '--pd-border-color': border_color });
         head.addClass('pd-styled');
 
-        // update index color
-        const select_color = root.css('--pd-body-tr-select-color');
+        // update select color
+        const select_color = root.css('--pd-select-color');
         if ((select_color || '').includes('rgba(')) {
             const bg = root.css('--pd-header-color');
-            root.css({ '--pd-body-tr-select-color': utils.rgba_to_rgb(select_color, bg) });
+            root.css({ '--pd-select-color': utils.rgba_to_rgb(select_color, bg) });
         }
     }
 

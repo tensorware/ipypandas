@@ -12,12 +12,12 @@
     --pd-border-color: initial;
     --pd-header-color: initial;
 
+    --pd-background-color: var(--jp-layout-color0, var(--vscode-notebook-editorBackground, initial));
+    --pd-select-color: var(--jp-rendermime-table-row-hover-background, var(--vscode-notebook-selectedCellBackground, initial));
+
     --pd-body-padding-top: 0px;
     --pd-body-padding-bottom: 0px;
     --pd-body-td-max-width: 1ch;
-
-    --pd-body-th-drag-color: var(--jp-rendermime-table-row-hover-background, initial);
-    --pd-body-tr-select-color: var(--jp-rendermime-table-row-hover-background, initial);
 
     --pd-footer-padding-top: 12px;
     --pd-footer-padding-bottom: 7px;
@@ -168,7 +168,7 @@
                             }
 
                             &.pd-dragover {
-                                background-color: var(--pd-body-th-drag-color);
+                                background-color: var(--pd-select-color);
 
                                 .pd-col-i-rescale {
                                     &::after {
@@ -241,16 +241,16 @@
 
                             &:not([rowspan]) {
                                 &.pd-select-active {
-                                    background-color: var(--pd-body-tr-select-color);
+                                    background-color: var(--pd-select-color);
 
                                     & ~ td.pd-data {
-                                        background-color: var(--pd-body-tr-select-color);
+                                        background-color: var(--pd-select-color);
                                     }
                                 }
 
                                 &:hover {
                                     cursor: pointer;
-                                    background-color: var(--pd-body-tr-select-color);
+                                    background-color: var(--pd-select-color);
                                 }
                             }
                         }
@@ -262,7 +262,7 @@
                                 }
 
                                 &:not([rowspan]) {
-                                    background-color: var(--pd-body-tr-select-color);
+                                    background-color: var(--pd-select-color);
                                 }
                             }
                         }
