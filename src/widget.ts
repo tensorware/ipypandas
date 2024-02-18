@@ -2,10 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
-import { MODULE_VERSION, MODULE_SEMVER, MODULE_NAME } from './version';
-
-import $ from 'jquery';
+import { MODULE_NAME, MODULE_VERSION, MODULE_SEMVER } from './version';
 import '../src/styles/index.css';
+import $ from 'jquery';
 
 export class PandasModel extends DOMWidgetModel {
     static serializers: ISerializers = {
@@ -398,6 +397,16 @@ export class PandasView extends DOMWidgetView {
         return true;
     }
 
+    reset_styles(): void {
+        const root = $(this.el);
+
+        // reset style variables
+        root.css({ '--pd-header-color': '', '--pd-border-color': '', '--pd-body-tr-select-color': '' });
+
+        // update view
+        this.update_data();
+    }
+
     reset_data(): void {
         const root = $(this.el);
         const view = root.children('.pd-view');
@@ -604,6 +613,7 @@ export class PandasView extends DOMWidgetView {
     update_table(): void {
         const root = $(this.el);
         const view = root.children('.pd-view');
+        const head = view.find('.pd-table > thead');
 
         const col_heads = view.find('.pd-col-head');
         const row_heads = view.find('.pd-row-head');
@@ -658,13 +668,11 @@ export class PandasView extends DOMWidgetView {
             $(th).css({ left: `${left - offset_row}px` });
         });
 
-        // update header color
-        const head_color = this.background_color(col_heads);
-        if (head_color && !head_color.includes('rgba(0, 0, 0, 0)')) {
-            root.css({ '--pd-header-color': head_color });
-        }
+        // update header styles
+        root.css({ '--pd-header-color': this.background_color(col_heads) });
+        root.css({ '--pd-border-color': head.css('border-bottom-color') });
 
-        // update index color
+        // update index styles
         const select_color = root.css('--pd-body-tr-select-color');
         if (select_color && select_color.includes('rgba')) {
             const bg_color = this.hex_to_rgb(root.css('--pd-header-color'));
