@@ -22,3 +22,4 @@ def test_widget():
 
     # default styler should be used
     assert isinstance(w.styler, Styler)
+    assert isinstance(w.styler_copy, Styler)
