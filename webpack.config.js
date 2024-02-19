@@ -72,7 +72,7 @@ module.exports = [
         devtool: 'source-map',
         output: {
             filename: 'embed.js',
-            path: path.resolve(__dirname, 'docs', 'source', 'static'),
+            path: path.resolve(__dirname, 'docs', 'source', 'static', 'scripts'),
             library: {
                 name: pkg.name,
                 type: 'amd'

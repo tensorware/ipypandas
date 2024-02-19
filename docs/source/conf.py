@@ -76,6 +76,6 @@ extensions = [
 # add setup scripts
 def setup(app):
     def add_scripts(app):
-        for file in ['embed.js']:
+        for file in ['scripts/embed.js']:
             app.add_js_file(file)
     app.connect('builder-inited', add_scripts)

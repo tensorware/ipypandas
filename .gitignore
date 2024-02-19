@@ -53,8 +53,9 @@ coverage.xml
 *,cover
 
 # Documentation
+docs/dev/
 docs/build/
-docs/source/static/embed.*
+docs/source/static/scripts/
 
 # Mac
 ._*

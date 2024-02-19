@@ -10,6 +10,10 @@ ipypandas
 
 Interactive JupyterLab features for the python data analysis library pandas.
 
+.. image:: _static/images/demo.gif
+    :align: center
+    :width: 900px
+|
 Pandas dataframes are rendered via ipypandas, which enables these interactive features (**fully server side**):
 
 - |x| Lazy loading
@@ -19,7 +23,7 @@ Pandas dataframes are rendered via ipypandas, which enables these interactive fe
 - |x| Search values
 - |_| Filter values
 
-The rendering has been tested for the following development environments (**fully theme supported**):
+The rendering has been tested for the following development environments (**full theme support**):
 
 - |x| JupyterLab
 - |x| JupyterNotebook
