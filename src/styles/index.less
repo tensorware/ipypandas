@@ -92,157 +92,163 @@
                     position: sticky;
 
                     &.pd-styled {
-                        background-color: var(--pd-header-color);
                         box-shadow: 0 var(--pd-border-width) var(--pd-border-color);
+                        background-color: var(--pd-header-color);
+
+                        tr {
+                            background-color: var(--pd-header-color);
+                        }
                     }
 
                     tr {
-                        th.pd-col-head:not([colspan]) {
-                            white-space: nowrap;
-
-                            .pd-col-text {
+                        th {
+                            &.pd-col-head:not([colspan]) {
                                 white-space: nowrap;
-                                margin: 0px 2px;
 
-                                &[draggable='true'] {
-                                    cursor: grab;
-                                }
-                            }
-
-                            .pd-col-i-rescale {
-                                overflow: hidden;
-                                transition: opacity 0.5s;
-                                opacity: 0;
-
-                                &::after {
-                                    content: '‖';
-                                    z-index: 3;
-                                    width: 16px;
-                                    height: 16px;
-                                    text-align: center;
-                                    position: absolute;
-                                    pointer-events: none;
-                                    display: inline-block;
-                                    background-color: var(--pd-header-color);
-                                    transform: translate(-18px, 0px);
-                                }
-
-                                span {
-                                    resize: horizontal;
-                                    overflow: hidden;
-                                    display: inline-block;
+                                .pd-col-text {
+                                    white-space: nowrap;
                                     margin: 0px 2px;
-                                    height: 8px;
 
-                                    &::before {
-                                        content: '';
-                                        width: 18px;
-                                        display: inline-block;
+                                    &[draggable='true'] {
+                                        cursor: grab;
                                     }
                                 }
-                            }
-
-                            .pd-col-i-sort {
-                                transition: opacity 0.5s;
-                                opacity: 0;
-
-                                span::before {
-                                    content: '';
-                                    display: inline-block;
-                                    border: solid;
-                                    transform: rotate(0deg);
-                                    border-width: 0px 0px 2px 0px;
-                                    margin: 0px 4px 3px 0px;
-                                    padding: 2px 3px;
-                                }
-                            }
-
-                            .pd-col-i-filter {
-                                transition: opacity 0.5s;
-                                opacity: 0;
-
-                                span::before {
-                                    content: '⋮';
-                                    display: inline-block;
-                                    font-size: 14px;
-                                    width: 6px;
-                                }
-                            }
-
-                            &.pd-sort-desc {
-                                .pd-col-i-sort {
-                                    transition: none;
-                                    opacity: 1;
-
-                                    span::before {
-                                        transform: rotate(45deg);
-                                        border-width: 0px 2px 2px 0px;
-                                        margin-bottom: 3px;
-                                        padding: 2px;
-                                    }
-                                }
-                            }
-
-                            &.pd-sort-asc {
-                                .pd-col-i-sort {
-                                    transition: none;
-                                    opacity: 1;
-
-                                    span::before {
-                                        transform: rotate(45deg);
-                                        border-width: 2px 0px 0px 2px;
-                                        margin-bottom: 0px;
-                                        padding: 2px;
-                                    }
-                                }
-                            }
-
-                            &.pd-filter-active {
-                                .pd-col-i-filter {
-                                    transition: none;
-                                    opacity: 1;
-                                }
-                            }
-
-                            &.pd-dragover {
-                                background-color: var(--pd-select-color);
 
                                 .pd-col-i-rescale {
+                                    overflow: hidden;
+                                    transition: opacity 0.5s;
+                                    opacity: 0;
+
                                     &::after {
-                                        background-color: transparent;
+                                        content: '‖';
+                                        z-index: 3;
+                                        width: 16px;
+                                        height: 16px;
+                                        text-align: center;
+                                        position: absolute;
+                                        pointer-events: none;
+                                        display: inline-block;
+                                        background-color: var(--pd-header-color);
+                                        transform: translate(-18px, 0px);
                                     }
 
                                     span {
-                                        opacity: 0;
+                                        resize: horizontal;
+                                        overflow: hidden;
+                                        display: inline-block;
+                                        margin: 0px 2px;
+                                        height: 8px;
+
+                                        &::before {
+                                            content: '';
+                                            width: 18px;
+                                            display: inline-block;
+                                        }
+                                    }
+                                }
+
+                                .pd-col-i-sort {
+                                    transition: opacity 0.5s;
+                                    opacity: 0;
+
+                                    span::before {
+                                        content: '';
+                                        display: inline-block;
+                                        border: solid;
+                                        transform: rotate(0deg);
+                                        border-width: 0px 0px 2px 0px;
+                                        margin: 0px 4px 3px 0px;
+                                        padding: 2px 3px;
+                                    }
+                                }
+
+                                .pd-col-i-filter {
+                                    transition: opacity 0.5s;
+                                    opacity: 0;
+
+                                    span::before {
+                                        content: '⋮';
+                                        display: inline-block;
+                                        font-size: 14px;
+                                        width: 6px;
+                                    }
+                                }
+
+                                &.pd-sort-desc {
+                                    .pd-col-i-sort {
+                                        transition: none;
+                                        opacity: 1;
+
+                                        span::before {
+                                            transform: rotate(45deg);
+                                            border-width: 0px 2px 2px 0px;
+                                            margin-bottom: 3px;
+                                            padding: 2px;
+                                        }
+                                    }
+                                }
+
+                                &.pd-sort-asc {
+                                    .pd-col-i-sort {
+                                        transition: none;
+                                        opacity: 1;
+
+                                        span::before {
+                                            transform: rotate(45deg);
+                                            border-width: 2px 0px 0px 2px;
+                                            margin-bottom: 0px;
+                                            padding: 2px;
+                                        }
+                                    }
+                                }
+
+                                &.pd-filter-active {
+                                    .pd-col-i-filter {
+                                        transition: none;
+                                        opacity: 1;
+                                    }
+                                }
+
+                                &.pd-dragover {
+                                    background-color: var(--pd-select-color);
+
+                                    .pd-col-i-rescale {
+                                        &::after {
+                                            background-color: transparent;
+                                        }
+
+                                        span {
+                                            opacity: 0;
+                                        }
+                                    }
+                                }
+
+                                &:hover {
+                                    cursor: pointer;
+
+                                    .pd-col-i-rescale {
+                                        opacity: 1;
+                                        cursor: col-resize;
+                                    }
+
+                                    .pd-col-i-sort {
+                                        opacity: 1;
+                                        cursor: pointer;
+                                    }
+
+                                    .pd-col-i-filter {
+                                        opacity: 1;
+                                        cursor: context-menu;
                                     }
                                 }
                             }
 
-                            &:hover {
-                                cursor: pointer;
-
-                                .pd-col-i-rescale {
-                                    opacity: 1;
-                                    cursor: col-resize;
-                                }
-
-                                .pd-col-i-sort {
-                                    opacity: 1;
-                                    cursor: pointer;
-                                }
-
-                                .pd-col-i-filter {
-                                    opacity: 1;
-                                    cursor: context-menu;
-                                }
+                            &.pd-index {
+                                left: 0;
+                                z-index: 2;
+                                position: sticky;
+                                background-color: var(--pd-header-color);
                             }
-                        }
-
-                        th.pd-index {
-                            left: 0;
-                            z-index: 2;
-                            position: sticky;
-                            background-color: var(--pd-header-color);
                         }
                     }
                 }
@@ -261,33 +267,35 @@
                     }
 
                     tr {
-                        th.pd-row-head {
-                            left: 0;
-                            z-index: 1;
-                            position: sticky;
-                            white-space: nowrap;
-                            background-color: var(--pd-header-color);
-
-                            .pd-row-text {
+                        th {
+                            &.pd-row-head {
+                                left: 0;
+                                z-index: 1;
+                                position: sticky;
                                 white-space: nowrap;
-                            }
+                                background-color: var(--pd-header-color);
 
-                            &:last-of-type {
-                                box-shadow: calc(-1 * var(--pd-border-width)) 0 var(--pd-border-color) inset;
-                            }
-
-                            &:not([rowspan]) {
-                                &.pd-select-active {
-                                    background-color: var(--pd-select-color);
-
-                                    & ~ td.pd-data {
-                                        background-color: var(--pd-select-color);
-                                    }
+                                .pd-row-text {
+                                    white-space: nowrap;
                                 }
 
-                                &:hover {
-                                    cursor: pointer;
-                                    background-color: var(--pd-select-color);
+                                &:last-of-type {
+                                    box-shadow: calc(-1 * var(--pd-border-width)) 0 var(--pd-border-color) inset;
+                                }
+
+                                &:not([rowspan]) {
+                                    &.pd-select-active {
+                                        background-color: var(--pd-select-color);
+
+                                        & ~ td.pd-data {
+                                            background-color: var(--pd-select-color);
+                                        }
+                                    }
+
+                                    &:hover {
+                                        cursor: pointer;
+                                        background-color: var(--pd-select-color);
+                                    }
                                 }
                             }
                         }
@@ -387,17 +395,19 @@
             .pd-view {
                 .pd-table {
                     thead {
-                        th.pd-col-head {
-                            .pd-col-i-rescale {
-                                opacity: 1;
-                            }
+                        th {
+                            &.pd-col-head {
+                                .pd-col-i-rescale {
+                                    opacity: 1;
+                                }
 
-                            .pd-col-i-sort {
-                                opacity: 1;
-                            }
+                                .pd-col-i-sort {
+                                    opacity: 1;
+                                }
 
-                            .pd-col-i-filter {
-                                opacity: 1;
+                                .pd-col-i-filter {
+                                    opacity: 1;
+                                }
                             }
                         }
                     }
