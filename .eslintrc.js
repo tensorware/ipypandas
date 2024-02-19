@@ -6,19 +6,17 @@ module.exports = {
         sourceType: 'module',
         project: 'tsconfig.json'
     },
-    ignorePatterns: ['**/node_modules', '**/dist', '**/lib', '*.js'],
     rules: {
-        '@typescript-eslint/no-use-before-define': 'off',
-        '@typescript-eslint/no-var-requires': 'off',
+        eqeqeq: 'error',
+        curly: ['error', 'all'],
+        'prefer-arrow-callback': 'error',
         '@typescript-eslint/no-explicit-any': 'off',
-        '@typescript-eslint/no-namespace': 'off',
         '@typescript-eslint/no-unused-vars': [
             'warn',
             {
                 args: 'none'
             }
         ],
-        '@typescript-eslint/ban-ts-comment': 'off',
         '@typescript-eslint/quotes': [
             'error',
             'single',
@@ -26,9 +24,7 @@ module.exports = {
                 avoidEscape: true,
                 allowTemplateLiterals: false
             }
-        ],
-        curly: ['error', 'all'],
-        eqeqeq: 'error',
-        'prefer-arrow-callback': 'error'
-    }
+        ]
+    },
+    ignorePatterns: ['**/node_modules', '**/dist', '**/lib', '*.js']
 };
