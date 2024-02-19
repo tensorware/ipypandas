@@ -14,7 +14,7 @@
 
 Interactive features for the python data analysis library pandas in jupyter.
 
-[![demo](https://raw.githubusercontent.com/tensorware/ipypandas/main/docs/source/static/images/demo.gif)](https://raw.githubusercontent.com/tensorware/ipypandas/main/docs/source/static/images/demo.gif)
+[![Demo](https://twa.re/ipypandas/_static/images/demo.gif)](https://twa.re/ipypandas)
 
 Pandas dataframes are rendered via ipypandas, which enables these interactive features (**fully server side**):
 
