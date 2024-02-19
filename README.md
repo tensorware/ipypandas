@@ -124,8 +124,7 @@ make html
 #### Versioning
 
 ```bash
-pip install tbump
-tbump <new-version>
+tbump 0.1.x
 ```
 
 ## Credits
