@@ -5,7 +5,7 @@ requires = ["hatchling>=1.21.1", "hatch-nodejs-version>=0.3.2", "jupyterlab>=4.0
 [project]
 name = "ipypandas"
 version = "0.0.11"
-description = "Interactive JupyterLab features for the python data analysis library pandas."
+description = "Interactive features for the python data analysis library pandas in jupyter."
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Tensorware" }]

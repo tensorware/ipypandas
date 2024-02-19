@@ -12,7 +12,7 @@
 > [!NOTE]
 > ❗ PROOF OF CONCEPT, WORK IN PROGRESS ❗
 
-Interactive JupyterLab features for the python data analysis library pandas.
+Interactive features for the python data analysis library pandas in jupyter.
 
 [![demo](https://raw.githubusercontent.com/tensorware/ipypandas/main/docs/source/static/images/demo.gif)](https://raw.githubusercontent.com/tensorware/ipypandas/main/docs/source/static/images/demo.gif)
 

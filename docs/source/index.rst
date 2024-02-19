@@ -8,7 +8,7 @@ ipypandas
 
     ❗ PROOF OF CONCEPT, WORK IN PROGRESS ❗
 
-Interactive JupyterLab features for the python data analysis library pandas.
+Interactive features for the python data analysis library pandas in jupyter.
 
 .. image:: _static/images/demo.gif
     :align: center
