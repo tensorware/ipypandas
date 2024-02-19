@@ -2,23 +2,20 @@
     "name": "ipypandas",
     "version": "0.0.10",
     "description": "Interactive JupyterLab features for the python data analysis library pandas.",
+    "license": "BSD-3-Clause",
+    "author": {
+        "name": "Tensorware"
+    },
     "keywords": [
         "widgets",
         "jupyter",
         "jupyterlab",
         "jupyterlab-extension"
     ],
-    "license": "BSD-3-Clause",
-    "homepage": "https://github.com/tensorware/ipypandas",
-    "author": {
-        "name": "Tensorware"
-    },
+    "homepage": "https://twa.re/ipypandas",
     "repository": {
         "type": "git",
         "url": "https://github.com/tensorware/ipypandas"
-    },
-    "bugs": {
-        "url": "https://github.com/tensorware/ipypandas/issues"
     },
     "files": [
         "src/styles/*.css",
@@ -73,13 +70,14 @@
         "build:less": "lessc src/styles/index.less src/styles/index.css",
         "build:nbextension": "webpack --mode=production",
         "build:labextension": "jupyter labextension build .",
-        "clean": "jlpm run clean:lib && jlpm run clean:docs && jlpm run clean:nbextension && jlpm run clean:labextension",
-        "clean:lib": "rimraf lib dist",
-        "clean:docs": "rimraf docs/build",
+        "clean": "jlpm run clean:less && jlpm run clean:lib && jlpm run clean:nbextension && jlpm run clean:labextension",
+        "clean:lib": "rimraf lib dist docs/build",
+        "clean:less": "rimraf src/styles/index.css",
         "clean:nbextension": "rimraf ipypandas/nbextension",
         "clean:labextension": "rimraf ipypandas/labextension",
-        "watch": "run-p watch:lib watch:nbextension watch:labextension",
+        "watch": "run-p watch:less watch:lib watch:nbextension watch:labextension",
         "watch:lib": "tsc -w --sourceMap",
+        "watch:less": "less-watch-compiler src/styles src/styles index.less",
         "watch:nbextension": "webpack --watch --mode=development",
         "watch:labextension": "jupyter labextension watch ."
     },
@@ -111,6 +109,7 @@
         "jest-environment-jsdom": "^29.7.0",
         "less": "^4.2.0",
         "less-loader": "^12.2.0",
+        "less-watch-compiler": "^1.16.3",
         "mkdirp": "^3.0.1",
         "npm-run-all": "^4.1.5",
         "prettier": "^3.2.5",

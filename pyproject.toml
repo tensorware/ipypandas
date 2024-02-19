@@ -28,7 +28,7 @@ requires-python = ">=3.8"
 dependencies = ["ipywidgets>=8.0.0", "pandas>=2.0.0"]
 
 [project.urls]
-Homepage = "https://github.com/tensorware/ipypandas"
+Homepage = "https://twa.re/ipypandas"
 Repository = "https://github.com/tensorware/ipypandas"
 
 [project.optional-dependencies]
@@ -59,9 +59,8 @@ exclude = [".git", ".github", ".vscode"]
 "src/labextension/install.json" = "share/jupyter/labextensions/ipypandas/install.json"
 
 [tool.hatch.build.hooks.jupyter-builder]
-build-function = "hatch_jupyter_builder.npm_builder"
-ensured-targets = ["ipypandas/nbextension/index.js", "ipypandas/labextension/package.json"]
 dependencies = ["hatch-jupyter-builder>=0.8.3"]
+build-function = "hatch_jupyter_builder.npm_builder"
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 path = "."
