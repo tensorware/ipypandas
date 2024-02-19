@@ -4,7 +4,7 @@ requires = ["hatchling>=1.21.1", "hatch-nodejs-version>=0.3.2", "jupyterlab>=4.0
 
 [project]
 name = "ipypandas"
-version = "0.0.11"
+version = "0.0.12"
 description = "Interactive features for the python data analysis library pandas in jupyter."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -81,7 +81,7 @@ file = [
 ]
 
 [tool.tbump.version]
-current = "0.0.11"
+current = "0.0.12"
 regex = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)((?P<channel>a|b|rc|dev)(?P<release>\\d+))?"
 
 [tool.tbump.git]
