@@ -732,29 +732,28 @@ export class PandasView extends DOMWidgetView {
         });
 
         // update background color
-        let bg_color = utils.rgba_background(head.parent()) || utils.hex_to_rgb(root.css('--pd-background-color'));
-        if ((bg_color || '').includes('rgba(')) {
-            bg_color = bg_color.substring(0, bg_color.lastIndexOf(',')).replace(/rgba/i, 'rgb') + ')';
-        }
-        root.css({ '--pd-background-color': bg_color });
+        const bg_head = utils.rgba_background(head.parent());
+        const bg_theme = utils.color_to_rgba(root.css('--pd-background-color'));
+        const bg_color = utils.rgba_to_rgb(bg_head || bg_theme);
+        root.css({ '--pd-background-color': bg_color, '--pd-header-color': bg_color });
+
+        // update border color
+        const border_head = utils.color_to_rgba(head.css('border-bottom-color'));
+        const border_theme = utils.color_to_rgba(root.css('--pd-border-color'));
+        const border_color = utils.rgba_to_rgb(border_theme || border_head);
+        root.css({ '--pd-border-color': border_color });
 
         // update header color
         const head_color = utils.rgba_background(col_heads);
-        if ((head_color || '').includes('rgba(')) {
-            const bg = root.css('--pd-background-color');
-            root.css({ '--pd-header-color': utils.rgba_to_rgb(head_color, bg) });
+        if (head_color) {
+            root.css({ '--pd-header-color': utils.rgba_to_rgb(head_color, root.css('--pd-background-color')) });
         }
-
-        // update border color
-        const border_color = utils.hex_to_rgb(head.css('border-bottom-color'));
-        root.css({ '--pd-border-color': border_color });
         head.addClass('pd-styled');
 
         // update select color
-        const select_color = root.css('--pd-select-color');
-        if ((select_color || '').includes('rgba(')) {
-            const bg = root.css('--pd-header-color');
-            root.css({ '--pd-select-color': utils.rgba_to_rgb(select_color, bg) });
+        const select_color = utils.color_to_rgba(root.css('--pd-select-color'));
+        if (select_color) {
+            root.css({ '--pd-select-color': utils.rgba_to_rgb(select_color, root.css('--pd-header-color')) });
         }
     }
 
