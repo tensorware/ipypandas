@@ -50,6 +50,9 @@ import pandas as pd
 import ipypandas
 ```
 
+More information can be found on the [documentation](https://twa.re/ipypandas)
+page.
+
 ## Development
 
 Create a dev environment:
