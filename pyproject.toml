@@ -42,8 +42,9 @@ docs = [
     "pypandoc>=1.7.5",
 ]
 examples = ["jupyterlab>=4.0.0", "ipywidgets>=8.0.0", "matplotlib>=3.0.0", "pyarrow>=15.0.0", "pandas>=2.0.0"]
-tests = ["hatch>=1.9.3", "nbval>=0.9.5", "pytest>=7.0.0"]
-dev = ["ipypandas[docs,examples,tests]"]
+tests = ["nbval>=0.9.5", "pytest>=7.0.0"]
+build = ["tbump>=6.8.0", "hatch>=1.9.3"]
+dev = ["ipypandas[docs,examples,tests,build]"]
 
 [tool.hatch.build]
 artifacts = ["ipypandas/nbextension", "ipypandas/labextension"]
@@ -59,8 +60,9 @@ exclude = [".git", ".github", ".vscode"]
 "src/labextension/install.json" = "share/jupyter/labextensions/ipypandas/install.json"
 
 [tool.hatch.build.hooks.jupyter-builder]
-dependencies = ["hatch-jupyter-builder>=0.8.3"]
 build-function = "hatch_jupyter_builder.npm_builder"
+dependencies = ["hatch-jupyter-builder>=0.8.3"]
+ensured-targets = ["ipypandas/nbextension/index.js", "ipypandas/labextension/package.json"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 path = "."
@@ -77,13 +79,12 @@ field = [{ name = "channel", default = "" }, { name = "release", default = "" }]
 file = [
     { src = "pyproject.toml", version_template = "version = \"{major}.{minor}.{patch}{channel}{release}\"" },
     { src = "package.json", version_template = "\"version\": \"{major}.{minor}.{patch}{channel}{release}\"" },
-    { src = "ipypandas/version.py", version_template = "__version__ = '{major}.{minor}.{patch}{channel}{release}'" },
 ]
-
-[tool.tbump.version]
-current = "0.0.12"
-regex = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)((?P<channel>a|b|rc|dev)(?P<release>\\d+))?"
 
 [tool.tbump.git]
 tag_template = "v{new_version}"
 message_template = "build: bump to v{new_version}"
+
+[tool.tbump.version]
+regex = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)((?P<channel>a|b|rc|dev)(?P<release>\\d+))?"
+current = "0.0.12"
