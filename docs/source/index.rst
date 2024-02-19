@@ -10,19 +10,21 @@ ipypandas
 
 Interactive JupyterLab features for the python data analysis library pandas.
 
+Pandas dataframes are rendered via ipypandas, which enables these interactive features (**fully server side**):
 
-Quickstart
-----------
+- |x| Lazy loading
+- |x| Sort columns
+- |x| Resize columns
+- |x| Reorder columns
+- |x| Search values
+- |_| Filter values
 
-To get started with ipypandas, install it via pip::
+The rendering has been tested for the following development environments (**fully theme supported**):
 
-    pip install ipypandas
-
-Importing ipypandas will enable the interactive pandas output globally::
-
-    import pandas as pd
-    ...
-    import ipypandas
+- |x| JupyterLab
+- |x| JupyterNotebook
+- |x| Visual Studio Code
+- |_| PyCharm Professional
 
 
 Contents
@@ -45,3 +47,12 @@ Contents
    :caption: Development
 
    development/development
+
+
+.. |x| raw:: html
+
+    <input checked="" disabled="" type="checkbox">
+
+.. |_| raw:: html
+
+    <input disabled="" type="checkbox">
