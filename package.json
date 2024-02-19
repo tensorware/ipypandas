@@ -1,6 +1,6 @@
 {
     "name": "ipypandas",
-    "version": "0.0.10",
+    "version": "0.0.11",
     "description": "Interactive JupyterLab features for the python data analysis library pandas.",
     "license": "BSD-3-Clause",
     "author": {
