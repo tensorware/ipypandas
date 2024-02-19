@@ -34,7 +34,8 @@ export class PandasModel extends DOMWidgetModel {
             _scroll_left: 0,
             _view_height: 0,
             _head_height: 0,
-            _row_height: 0
+            _row_height: 0,
+            _messages: []
         };
     }
 }
@@ -64,7 +65,7 @@ export class PandasView extends DOMWidgetView {
         // register change events
         this.model.on('change:view', this.update_data, this);
         this.model.on('change:sync_up', this.reset_data, this);
-        this.model.on('change:log_msg', utils.log_msg, this);
+        this.model.on('change:log_msg', this.log_msg, this);
     }
 
     sync_down(event: string): void {
@@ -78,7 +79,17 @@ export class PandasView extends DOMWidgetView {
         this.touch();
     }
 
-    get_view(): JQuery<HTMLElement> {
+    create_panel(): JQuery<HTMLElement> {
+        const panel = $('<div/>').addClass('pd-panel');
+
+        // message
+        const message = $('<div/>').addClass('pd-message');
+        panel.append(message);
+
+        return panel;
+    }
+
+    create_view(): JQuery<HTMLElement> {
         const view = $('<div/>').addClass('pd-view');
 
         // html from pandas table
@@ -96,7 +107,7 @@ export class PandasView extends DOMWidgetView {
         return view;
     }
 
-    get_footer(): JQuery<HTMLElement> {
+    create_footer(): JQuery<HTMLElement> {
         const footer = $('<div/>').addClass('pd-footer');
 
         // shape
@@ -124,7 +135,7 @@ export class PandasView extends DOMWidgetView {
         return footer;
     }
 
-    get_filter(th: JQuery<HTMLElement>): JQuery<HTMLElement> {
+    create_filter(th: JQuery<HTMLElement>): JQuery<HTMLElement> {
         const filter = $('<div/>').addClass('pd-filter');
 
         // calculate position
@@ -473,6 +484,22 @@ export class PandasView extends DOMWidgetView {
 
     attach_click(view: JQuery<HTMLElement>): void {
         const root = $(this.el);
+        const panel = root.children('.pd-panel');
+
+        panel.on('click', (e: JQuery.ClickEvent) => {
+            const target = $(e.target);
+
+            // message clicked
+            const message = target.closest('.pd-message');
+            if (message.length && !message.is('.pd-expanded')) {
+                message.addClass('pd-expanded');
+
+                // copy to clipboard
+                window.navigator.clipboard.writeText(message.text());
+                this.append_message($('<p/>').text('Message copied to clipboard...').addClass('pd-lvl-1'));
+                this.update_panel();
+            }
+        });
 
         view.on('click', (e: JQuery.ClickEvent) => {
             const target = $(e.target);
@@ -489,7 +516,7 @@ export class PandasView extends DOMWidgetView {
                 const col_filter = target.closest('.pd-col-i-filter');
                 if (col_filter.length) {
                     if (!filter.length) {
-                        root.append(this.get_filter(col_head));
+                        root.append(this.create_filter(col_head));
                         col_head.addClass('pd-filter-active');
                     }
                 } else {
@@ -532,6 +559,10 @@ export class PandasView extends DOMWidgetView {
                     this.sync_down('search');
                 }
             });
+
+            // prevent default behavior
+            e.preventDefault();
+            e.stopPropagation();
         });
     }
 
@@ -543,6 +574,7 @@ export class PandasView extends DOMWidgetView {
         this.model.set('_scroll_top', 0);
         this.model.set('_scroll_left', 0);
         this.model.set('_view_height', 0);
+        this.model.set('_messages', []);
 
         // set viewport range
         this.set_range(view);
@@ -575,9 +607,17 @@ export class PandasView extends DOMWidgetView {
         $.when(root).then(() => {
             this.update_container();
 
+            // append panel
+            const panel = this.create_panel();
+            root.append(panel);
+
             // append view
-            const view = this.get_view();
+            const view = this.create_view();
             root.append(view);
+
+            // append footer
+            const footer = this.create_footer();
+            root.append(footer);
 
             // attach view events
             $.when(view).then(() => {
@@ -597,14 +637,11 @@ export class PandasView extends DOMWidgetView {
                 this.set_height(view);
 
                 // update elements
+                this.update_panel();
                 this.update_table();
                 this.update_view();
                 this.update_footer();
             });
-
-            // append footer
-            const footer = this.get_footer();
-            root.append(footer);
 
             // attach footer events
             $.when(footer).then(() => {
@@ -624,6 +661,16 @@ export class PandasView extends DOMWidgetView {
             // remove vscode styles (https://github.com/microsoft/vscode-jupyter/issues/7161#issuecomment-1433728616)
             root.parents('.cell-output-ipywidget-background').removeClass('cell-output-ipywidget-background');
         }
+    }
+
+    update_panel(): void {
+        const root = $(this.el);
+        const panel = root.children('.pd-panel');
+        const message = panel.children('.pd-message');
+
+        // append message
+        const messages = this.model.get('_messages');
+        message.empty().append(messages.toReversed());
     }
 
     update_table(): void {
@@ -733,27 +780,70 @@ export class PandasView extends DOMWidgetView {
         footer.css({ '--pd-footer-max-width': `${table.width() || 0}px` });
     }
 
+    append_message(text: JQuery<HTMLElement>): void {
+        const messages = this.model.get('_messages');
+        this.model.set('_messages', messages.concat([text]));
+    }
+
     compress(event: string, handler: TimerHandler, delay = 200): void {
         const timers = this.compress as any;
         clearTimeout(timers[event] || -1);
         timers[event] = setTimeout(handler, delay);
     }
 
-    log(level: string, message: string): void {
+    log(lvl: string, msg: string): void {
         const levels: { [key: string]: any } = { debug: 0, info: 1, warn: 2, error: 3 };
-        if (!(levels[level] >= levels[this.model.get('log_level')])) {
+        if (!(levels[lvl] >= levels[this.model.get('log_level')])) {
             return;
         }
 
-        // send log message to console
-        utils.log_msg(
+        // send log message to client
+        this.log_msg(
             this,
             JSON.stringify({
                 date: `${Date.now()}`,
                 source: 'widget.ts',
-                level: levels[level],
-                message: message
+                level: levels[lvl],
+                message: msg
             })
         );
+    }
+
+    log_msg(ctx: object, json: string): void {
+        const root = $(this.el);
+
+        const log = JSON.parse(json);
+        const msg = `${new Date(parseInt(log.date)).toLocaleString()}, ${log.source}: ${log.message}`;
+        const text = $('<p/>').text(msg).addClass(`pd-lvl-${log.level}`);
+
+        // send log message to console
+        switch (log.level) {
+            case 0:
+                console.debug(msg);
+                break;
+            case 1:
+                console.info(msg);
+                break;
+            case 2:
+                console.warn(msg);
+                break;
+            case 3:
+                console.error(msg);
+                break;
+            default:
+                console.log(msg);
+        }
+
+        // send log message to view
+        switch (log.level) {
+            case 2:
+            case 3:
+                // hide sync indicator
+                root.css({ '--pd-root-cursor': 'initial' });
+
+                // update message panel
+                this.append_message(text);
+                this.update_panel();
+        }
     }
 }

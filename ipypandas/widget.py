@@ -5,6 +5,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import json
+import traceback
 import pandas as pd
 
 from time import time
@@ -117,17 +118,20 @@ class PandasWidget(DOMWidget):
 
     def timeit(func):
         def wrapper(func, *args, **kwargs):
+            self = args[0]
             start = time()
-            result = func(*args, **kwargs)
+            try:
+                result = func(*args, **kwargs)
+            except Exception:
+                self.log('error', traceback.format_exc())
             end = time()
-            args[0].log('debug', f'{func.__name__} executed in {(end - start) * 1000:.2f} ms')
+            self.log('debug', f'{func.__name__} executed in {(end - start) * 1000:.2f} ms')
             return result
         return decorator(wrapper, func)
 
     @observe('sync_down')
     def update(self, change):
         self.log('info', f'------ host update ({module_name} v{module_version}) ------')
-        event = change.new.split('-')[0]
 
         # copy original data
         self.df_copy = self.df.copy()
@@ -144,6 +148,7 @@ class PandasWidget(DOMWidget):
         self.df_copy = self.df_copy.iloc[self.start_row:self.end_row]
 
         # reset viewport dimensions
+        event = change.new.split('-')[0]
         if event in ['search']:
             self.sync_up = f'reset-{datetime.now().timestamp() * 1000:.0f}'
             return
@@ -303,17 +308,17 @@ class PandasWidget(DOMWidget):
 
         return styler1
 
-    def log(self, level, message):
+    def log(self, lvl, msg):
         levels = { 'debug': 0, 'info': 1, 'warn': 2, 'error': 3 }
-        if not (levels[level] >= levels[self.log_level]):
+        if not (levels[lvl] >= levels[self.log_level]):
             return
 
         # send log message to client
         self.log_msg = json.dumps({
             'date': f'{datetime.now().timestamp() * 1000:.0f}',
             'source': 'widget.py',
-            'level': levels[level],
-            'message': message
+            'level': levels[lvl],
+            'message': msg
         })
 
     def __repr__(self):

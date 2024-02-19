@@ -70,26 +70,3 @@ export function class_rotate(target: JQuery<HTMLElement>, classes: string[]): st
     target.addClass(classes[0]);
     return classes[0];
 }
-
-export function log_msg(ctx: object, json: string): void {
-    const log = JSON.parse(json);
-    const date = new Date(parseInt(log.date)).toLocaleString();
-
-    const msg = `${date}, ${log.source}: ${log.message}`;
-    switch (log.level) {
-        case 0:
-            console.debug(msg);
-            break;
-        case 1:
-            console.info(msg);
-            break;
-        case 2:
-            console.warn(msg);
-            break;
-        case 3:
-            console.error(msg);
-            break;
-        default:
-            console.log(msg);
-    }
-}

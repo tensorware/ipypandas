@@ -12,8 +12,13 @@
     --pd-border-color: initial;
     --pd-header-color: initial;
 
-    --pd-background-color: var(--jp-layout-color0, var(--vscode-notebook-editorBackground, initial));
-    --pd-select-color: var(--jp-rendermime-table-row-hover-background, var(--vscode-notebook-selectedCellBackground, initial));
+    --pd-background-color: var(--vscode-notebook-editorBackground, var(--jp-layout-color0, initial));
+    --pd-select-color: var(--vscode-notebook-selectedCellBackground, var(--jp-rendermime-table-row-hover-background, initial));
+
+    --pd-lvl-0-color: initial;
+    --pd-lvl-1-color: green;
+    --pd-lvl-2-color: orange;
+    --pd-lvl-3-color: red;
 
     --pd-body-padding-top: 0px;
     --pd-body-padding-bottom: 0px;
@@ -36,6 +41,38 @@
         min-height: var(--pd-root-min-height);
         opacity: var(--pd-root-opacity);
         cursor: var(--pd-root-cursor);
+
+        .pd-panel {
+            .pd-message {
+                overflow-y: auto;
+                max-height: 70px;
+
+                &.pd-expanded {
+                    max-height: initial;
+                }
+
+                p {
+                    margin: 0;
+                    padding: 0;
+
+                    &.pd-lvl-0 {
+                        color: var(--pd-lvl-0-color);
+                    }
+
+                    &.pd-lvl-1 {
+                        color: var(--pd-lvl-1-color);
+                    }
+
+                    &.pd-lvl-2 {
+                        color: var(--pd-lvl-2-color);
+                    }
+
+                    &.pd-lvl-3 {
+                        color: var(--pd-lvl-3-color);
+                    }
+                }
+            }
+        }
 
         .pd-view {
             height: 0;
